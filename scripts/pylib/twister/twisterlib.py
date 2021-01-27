@@ -707,6 +707,7 @@ class DeviceHandler(Handler):
         else:
             serial_device = hardware.serial
 
+        self.serial_device = serial_device
         logger.debug("Using serial device {}".format(serial_device))
 
         if (self.suite.west_flash is not None) or runner:
@@ -2402,8 +2403,9 @@ class ProjectBuilder(FilterBuilder):
                 else:
                     more_info = "build"
 
-            logger.info("{:>{}}/{} {:<25} {:<50} {} ({})".format(
+            logger.info("{:>{}}/{} {:<25} at {:<25} {:<50} {} ({})".format(
                 results.done, total_tests_width, total_to_do, instance.platform.name,
+                instance.handler.serial_device,
                 instance.testcase.name, status, more_info))
 
             if instance.status in ["error", "failed", "timeout"]:
