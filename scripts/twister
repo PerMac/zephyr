@@ -604,6 +604,10 @@ structure in the main Zephyr tree: boards/<arch>/<board_name>/""")
              "use with the --device-serial option.")
 
     parser.add_argument(
+        "--allow-off", action="store_true",
+        help="Turn off checking platform_allow form test yamls")
+
+    parser.add_argument(
         "-X", "--fixture", action="append", default=[],
         help="Specify a fixture that a board might support")
 
@@ -860,6 +864,7 @@ def main():
     suite.enable_coverage = options.enable_coverage
     suite.enable_valgrind = options.enable_valgrind
     suite.coverage_platform = options.coverage_platform
+    suite.allow_off = options.allow_off
     suite.inline_logs = options.inline_logs
     suite.enable_size_report = options.enable_size_report
     suite.extra_args = options.extra_args

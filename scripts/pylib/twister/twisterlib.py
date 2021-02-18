@@ -2905,7 +2905,8 @@ class TestSuite(DisablePyTestCollectionMixin):
                         tc.arch_exclude = tc_dict["arch_exclude"]
                         tc.skip = tc_dict["skip"]
                         tc.platform_exclude = tc_dict["platform_exclude"]
-                        tc.platform_allow = tc_dict["platform_allow"]
+                        if not self.allow_off:
+                            tc.platform_allow = tc_dict["platform_allow"]
                         tc.toolchain_exclude = tc_dict["toolchain_exclude"]
                         tc.toolchain_allow = tc_dict["toolchain_allow"]
                         tc.tc_filter = tc_dict["filter"]
