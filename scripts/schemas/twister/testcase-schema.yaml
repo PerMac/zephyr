@@ -26,6 +26,20 @@ mapping:
       "build_on_all":
         type: bool
         required: no
+      "multi_build":
+        type: seq
+        sequence:
+          - type: map
+            mapping:
+              "name":
+                type: str
+                required: yes
+              "path":
+                type: str
+                required: yes
+              "extra_args":
+                type: str
+                required: no
       "depends_on":
         type: str
         required: no

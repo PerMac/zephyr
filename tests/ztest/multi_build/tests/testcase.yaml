@@ -1,0 +1,34 @@
+common:
+  tags: mcuboot rsa
+  multi_build:
+    - name: bootloader
+      path: ../../../../../bootloader/mcuboot/boot/zephyr
+      extra_args: OVERLAY_CONFIG=../../samples/zephyr/overlay-rsa.conf
+    - name: hello1
+      path: ../hello-world
+    - name: hello2
+      path: ../hello-world
+
+tests:
+  mcuboot.rsa.good:
+    build_only: true
+    integration_platforms:
+      - nrf52840dk_nrf52840
+    #extra_build_configs:
+    #  bootloader:
+    #    - some_arg=XXYYZZ
+
+#		cmake -DOVERLAY_CONFIG=$(BOOTLOADER_OVERLAY_CONFIG) \
+#			-G"Ninja" \
+#			-DBOARD=$(BOARD) \
+#			$(SOURCE_DIRECTORY)/../../boot/zephyr && \
+#		ninja)
+
+# DEBUG   - Calling cmake with arguments: ['-B/home/maciej/zephyrproject2/zephyr/twister-out/nrf52840dk_nrf52840/tests/drivers/flash/drivers.flash.soc_flash_nrf', '-S/home/maciej/zephyrproject2/zephyr/tests/drivers/flash', '-DEXTRA_CFLAGS="-Werror"', '-DEXTRA_AFLAGS="-Wa,--fatal-warnings', '-DEXTRA_LDFLAGS="-Wl,--fatal-warnings"', '-DEXTRA_GEN_DEFINES_ARGS=--err-on-deprecated-properties', '-GUnix Makefiles', '-DOVERLAY_CONFIG=boards/nrf52840_flash_soc.conf', '-DBOARD=nrf52840dk_nrf52840']
+
+
+# DEBUG   - Calling cmake with arguments: ['-B/home/maciej/zephyrproject2/zephyr/twister-out/nrf52840dk_nrf52840/tests/ztest/multi_build/tests/bootloader', '-S/home/maciej/zephyrproject2/zephyr/tests/ztest/multi_build/bootloader', '-DEXTRA_CFLAGS="-Werror"', '-DEXTRA_AFLAGS="-Wa,--fatal-warnings', '-DEXTRA_LDFLAGS="-Wl,--fatal-warnings"', '-DEXTRA_GEN_DEFINES_ARGS=--err-on-deprecated-properties', '-GUnix Makefiles', '-DBOARD=nrf52840dk_nrf52840']
+
+# DEBUG   - Calling cmake with arguments: ['-B/home/maciej/zephyrproject2/zephyr/twister-out/nrf52840dk_nrf52840/tests/ztest/multi_build/tests/bootloader', '-S/home/maciej/zephyrproject2/zephyr/tests/ztest/multi_build/bootloader', '-DEXTRA_CFLAGS="-Werror"', '-DEXTRA_AFLAGS="-Wa,--fatal-warnings', '-DEXTRA_LDFLAGS="-Wl,--fatal-warnings"', '-DEXTRA_GEN_DEFINES_ARGS=--err-on-deprecated-properties', '-GUnix Makefiles', '-DOVERLAY_CONFIG=overlay-rsa.conf', '-DBOARD=nrf52840dk_nrf52840']
+
+
