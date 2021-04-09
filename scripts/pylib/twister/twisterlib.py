@@ -34,6 +34,7 @@ import platform
 import yaml
 import json
 from multiprocessing import Lock, Process, Value
+import stageslib
 
 try:
     # Use the C LibYAML parser if available, rather than the Python parser.
@@ -774,7 +775,7 @@ class DeviceHandler(Handler):
         post_script = hardware.post_script
 
         if pre_script:
-            self.run_custom_script(pre_script, 30)
+            stageslib.run_custom_script(pre_script, 30)
 
         try:
             ser = serial.Serial(
@@ -838,7 +839,7 @@ class DeviceHandler(Handler):
             os.write(write_pipe, b'x')  # halt the thread
 
         if post_flash_script:
-            self.run_custom_script(post_flash_script, 30)
+            stageslib.run_custom_script(post_flash_script, 30)
 
         t.join(self.timeout)
         if t.is_alive():
@@ -887,7 +888,7 @@ class DeviceHandler(Handler):
             self.set_state(out_state, handler_time)
 
         if post_script:
-            self.run_custom_script(post_script, 30)
+            stageslib.run_custom_script(post_script, 30)
 
         self.make_device_available(serial_device)
         self.record(harness)
@@ -1632,6 +1633,7 @@ class TestCase(DisablePyTestCollectionMixin):
         self.min_flash = -1
         self.extra_sections = None
         self.integration_platforms = []
+        self.stages = None
 
     @staticmethod
     def get_unique(testcase_root, workdir, name):
@@ -1793,6 +1795,9 @@ class TestInstance(DisablePyTestCollectionMixin):
                     'source_dir': os.path.normpath(os.path.join(self.main_source, image['path'])),
                     'extra_args': image.get('extra_args', None)
                 }
+        self.stages = []
+        if testcase.stages:
+            self.stages = stageslib.get_stages(self)
 
         self.run = False
 
@@ -2210,6 +2215,8 @@ class ProjectBuilder(FilterBuilder):
         self.suite = suite
         self.filtered_tests = 0
         self.multi_build = instance.multi_build
+        if instance.stages:
+            self.stages = instance.stages
 
         self.lsan = kwargs.get('lsan', False)
         self.asan = kwargs.get('asan', False)
@@ -2405,7 +2412,11 @@ class ProjectBuilder(FilterBuilder):
         # Run the generated binary using one of the supported handlers
         if op == "run":
             logger.debug("run test: %s" % self.instance.name)
-            self.run()
+            if self.stages:
+                for stage in self.stages:
+                    stage.run()
+            else:
+                self.run()
             self.instance.status, _ = self.instance.handler.get_state()
             logger.debug(f"run status: {self.instance.name} {self.instance.status}")
 
@@ -2619,6 +2630,23 @@ class ProjectBuilder(FilterBuilder):
 
         sys.stdout.flush()
 
+    def run_stages(self):
+
+        instance = self.instance
+
+        for stage in self.stages:
+            stage.run()
+        """
+        if instance.handler:
+            if instance.handler.type_str == "device":
+                instance.handler.suite = self.suite
+
+            instance.handler.handle()
+
+        sys.stdout.flush()
+        """
+
+
 class TestSuite(DisablePyTestCollectionMixin):
     config_re = re.compile('(CONFIG_[A-Za-z0-9_]+)[=]\"?([^\"]*)\"?$')
     dt_re = re.compile('([A-Za-z0-9_]+)[=]\"?([^\"]*)\"?$')
@@ -2654,7 +2682,8 @@ class TestSuite(DisablePyTestCollectionMixin):
                        "toolchain_allow": {"type": "set"},
                        "filter": {"type": "str"},
                        "harness": {"type": "str"},
-                       "harness_config": {"type": "map", "default": {}}
+                       "harness_config": {"type": "map", "default": {}},
+                       "stages": {"type": "list", "default": []}
                        }
 
     RELEASE_DATA = os.path.join(ZEPHYR_BASE, "scripts", "release",
@@ -3025,7 +3054,8 @@ class TestSuite(DisablePyTestCollectionMixin):
                         tc.min_flash = tc_dict["min_flash"]
                         tc.extra_sections = tc_dict["extra_sections"]
                         tc.integration_platforms = tc_dict["integration_platforms"]
-
+                        if tc_dict["stages"]:
+                            tc.stages = tc_dict["stages"]
                         tc.parse_subcases(tc_path)
 
                         if testcase_filter:
@@ -3038,6 +3068,7 @@ class TestSuite(DisablePyTestCollectionMixin):
                     logger.error("%s: can't load (skipping): %s" % (tc_path, e))
                     self.load_errors += 1
         return len(self.testcases)
+
 
     def get_platform(self, name):
         selected_platform = None

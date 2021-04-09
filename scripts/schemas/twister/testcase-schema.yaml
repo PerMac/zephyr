@@ -252,3 +252,27 @@ mapping:
           "slow":
             type: bool
             required: no
+          "stages":
+            type: seq
+            required: no
+            sequence:
+              - type: map
+                mapping:
+                  "CallScripts":
+                    type: seq
+                    required: no
+                    sequence:
+                      - type: str
+                  "WestSign":
+                    type: map
+                    required: no
+                    mapping:
+                      "image":
+                        type: str
+                        required: no
+                      "key":
+                        type: str
+                        required: no
+                  "flash":
+                    type: str
+                    required: no

@@ -11,18 +11,31 @@ common:
 
 tests:
   mcuboot.rsa.good:
-    build_only: true
     integration_platforms:
-      - nrf52840dk_nrf52840
-    #extra_build_configs:
-    #  bootloader:
-    #    - some_arg=XXYYZZ
+      - nrf52dk_nrf52832
+    stages:
+      - CallScripts:
+        - "west sign -d twister-out/nrf52dk_nrf52832/tests/ztest/multi_build/tests/mcuboot.rsa.good/hello1
+        -H zephyr.hex -t imgtool -p /home/maciej/zephyrproject2/bootloader/mcuboot/scripts/imgtool.py --
+        --key /home/maciej/zephyrproject2/bootloader/mcuboot/root-rsa-2048.pem"
+      - WestSign:
+          image: hello2
+          key: /home/maciej/zephyrproject2/bootloader/mcuboot/root-rsa-2048.pem
+#      - flash: bootloader
+#        harness: console
+#        harness_config:
+#          type: multi_line
+#          regex:
+#            - "Hello World!"
+#            - "mylib says: Hello World!"
+#      - flash: hello1
+#        harness: console
+#        harness_config:
+#          type: multi_line
+#          regex:
+#            - "Hello World!"
+#            - "mylib says: Hello World!"
 
-#		cmake -DOVERLAY_CONFIG=$(BOOTLOADER_OVERLAY_CONFIG) \
-#			-G"Ninja" \
-#			-DBOARD=$(BOARD) \
-#			$(SOURCE_DIRECTORY)/../../boot/zephyr && \
-#		ninja)
 
 # DEBUG   - Calling cmake with arguments: ['-B/home/maciej/zephyrproject2/zephyr/twister-out/nrf52840dk_nrf52840/tests/drivers/flash/drivers.flash.soc_flash_nrf', '-S/home/maciej/zephyrproject2/zephyr/tests/drivers/flash', '-DEXTRA_CFLAGS="-Werror"', '-DEXTRA_AFLAGS="-Wa,--fatal-warnings', '-DEXTRA_LDFLAGS="-Wl,--fatal-warnings"', '-DEXTRA_GEN_DEFINES_ARGS=--err-on-deprecated-properties', '-GUnix Makefiles', '-DOVERLAY_CONFIG=boards/nrf52840_flash_soc.conf', '-DBOARD=nrf52840dk_nrf52840']
 
