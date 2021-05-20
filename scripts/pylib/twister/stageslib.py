@@ -1,5 +1,6 @@
 import logging
 import subprocess
+import sys
 
 logger = logging.getLogger('twister')
 logger.setLevel(logging.DEBUG)
@@ -12,10 +13,10 @@ class ExecutionStage:
     """
     description = None
 
-    def __init__(self, description=None, instance=None):
+    def __init__(self, description=None, proj_builder=None):
         self.description = description
-        if instance:
-            self.instance = instance
+        if proj_builder:
+            self.pb = proj_builder
 
     def run(self):
         """Define procedure to be executed at a given stage.
@@ -29,7 +30,7 @@ class ExecutionStage:
 class CallScriptsStage(ExecutionStage):
     """ TODO: ADD description"""
 
-    def __init__(self, description=None, instance=None):
+    def __init__(self, description=None, proj_builder=None):
         ExecutionStage.__init__(self, description)
 
     def run(self):
@@ -40,16 +41,16 @@ class CallScriptsStage(ExecutionStage):
 
 class WestSignStage(ExecutionStage):
     """ TODO: ADD description"""
-    def __init__(self, description=None, instance=None):
-        ExecutionStage.__init__(self, description, instance)
+    def __init__(self, description=None, proj_builder=None):
+        ExecutionStage.__init__(self, description, proj_builder)
 
     def run(self):
         image = self.description.get('image', 'main')
         key = self.description.get('key', 'default')
         if image == 'main':
-            img_path = self.instance.build_dir
-        elif self.instance.multi_build:
-            img_path = self.instance.multi_build[image]['build_dir']
+            img_path = self.pb.instance.build_dir
+        elif self.pb.instance.multi_build:
+            img_path = self.pb.instance.multi_build[image]['build_dir']
         else:
             # TODO: add error?
             pass
@@ -65,17 +66,51 @@ class WestSignStage(ExecutionStage):
         run_custom_script(command, timeout=15)
 
 
-def get_stages(instance):
-    stages = []
-    for stage in instance.testcase.stages:
-        (name, description), = stage.items()
-        # This will create a stage object of a type given in the name
-        # e.g. for CallScript name CallScriptStage(description) object
-        # will be created
-        ev = f"{name}Stage(description, instance)"
-        stages.append(eval(ev))
+class OnTargetStage(ExecutionStage):
+    """ TODO: ADD description"""
+    def __init__(self, description=None, proj_builder=None):
+        ExecutionStage.__init__(self, description, proj_builder)
 
-    return stages
+    def run(self):
+        instance = self.pb.instance
+        suite = self.pb.suite
+        image = self.description.get('image', 'main')
+        #instance.build_dir = instance.multi_build[image]['build_dir']
+        # instance.testcase attributes have to be updated with stage specific data
+        for k, v in self.description.items():
+            if k in ["harness", "harness_config"]:
+                setattr(instance.testcase, k, v)
+        if instance.handler:
+            if instance.handler.type_str == "device":
+                instance.handler.suite = suite
+            instance.handler.build_dir = instance.multi_build[image]['build_dir']
+            # We have to update handler.instance to align with image/harness selection
+            #instance.handler.instance = instance
+            instance.handler.handle()
+
+        sys.stdout.flush()
+
+
+class StageContainer:
+    def __init__(self, proj_builder):
+        self.pb = proj_builder
+        self.stages = self.get_stages()
+
+    def __iter__(self):
+        for stage in self.stages:
+            yield stage
+
+    def get_stages(self):
+        stages = []
+        for stage in self.pb.instance.testcase.stages:
+            (name, description), = stage.items()
+            # This will create a stage object of a type given in the name
+            # e.g. for name=CallScript CallScriptStage(description) object
+            # will be created
+            ev = f"{name}Stage(description, self.pb)"
+            stages.append(eval(ev))
+
+        return stages
 
 
 def run_custom_script(script, timeout):

@@ -273,6 +273,42 @@ mapping:
                       "key":
                         type: str
                         required: no
-                  "flash":
-                    type: str
+                  "OnTarget":
+                    type: map
                     required: no
+                    mapping:
+                      "image":
+                        type: str
+                        required: no
+                      "harness":
+                        type: str
+                        required: no
+                      "harness_config":
+                        type: map
+                        required: no
+                        mapping:
+                          "type":
+                            type: str
+                            required: no
+                          "fixture":
+                            type: str
+                            required: no
+                          "ordered":
+                            type: bool
+                            required: no
+                          "repeat":
+                            type: int
+                            required: no
+                          "regex":
+                            type: seq
+                            required: no
+                            sequence:
+                              - type: str
+                          "record":
+                            type: map
+                            required: no
+                            mapping:
+                              "regex":
+                                type: str
+                                required: no
+

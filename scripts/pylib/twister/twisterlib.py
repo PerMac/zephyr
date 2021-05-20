@@ -1795,9 +1795,6 @@ class TestInstance(DisablePyTestCollectionMixin):
                     'source_dir': os.path.normpath(os.path.join(self.main_source, image['path'])),
                     'extra_args': image.get('extra_args', None)
                 }
-        self.stages = []
-        if testcase.stages:
-            self.stages = stageslib.get_stages(self)
 
         self.run = False
 
@@ -2215,8 +2212,10 @@ class ProjectBuilder(FilterBuilder):
         self.suite = suite
         self.filtered_tests = 0
         self.multi_build = instance.multi_build
-        if instance.stages:
-            self.stages = instance.stages
+
+        self.stages = []
+        if self.instance.testcase.stages:
+            self.stages = stageslib.StageContainer(proj_builder=self)
 
         self.lsan = kwargs.get('lsan', False)
         self.asan = kwargs.get('asan', False)
@@ -2322,7 +2321,7 @@ class ProjectBuilder(FilterBuilder):
             instance.handler.generator_cmd = self.generator_cmd
             instance.handler.generator = self.generator
 
-    def image_selector(self, message):
+    def image_selector(self, message, selected_img=None):
         # The build process, call cmake and build with configured generator
         # For multi_build cmake and build steps will be repeated for each image individually
         # Store the original self.source_dir and self.build_dir. These values
@@ -2333,6 +2332,8 @@ class ProjectBuilder(FilterBuilder):
         # all subimages has both 'cmake' and 'build' statuses true.
         # TODO: Dont scan all every time, do some pop
         for image in self.multi_build:
+            if selected_img and selected_img != image:
+                continue
             self.source_dir = self.multi_build[image]['source_dir']
             self.build_dir = self.multi_build[image]['build_dir']
             if self.multi_build[image]['extra_args']:
@@ -2629,22 +2630,6 @@ class ProjectBuilder(FilterBuilder):
             instance.handler.handle()
 
         sys.stdout.flush()
-
-    def run_stages(self):
-
-        instance = self.instance
-
-        for stage in self.stages:
-            stage.run()
-        """
-        if instance.handler:
-            if instance.handler.type_str == "device":
-                instance.handler.suite = self.suite
-
-            instance.handler.handle()
-
-        sys.stdout.flush()
-        """
 
 
 class TestSuite(DisablePyTestCollectionMixin):
