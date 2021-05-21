@@ -27,11 +27,11 @@ tests:
           harness_config:
             type: one_line
             regex:
-              - "I: Starting bootloader"
+              - "Unable to find bootable image"
       - OnTarget:
           image: hello1
           harness: console
           harness_config:
             type: multi_line
             regex:
-              - "I: Starting bootloader"
+              - "Hello World"

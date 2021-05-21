@@ -46,7 +46,16 @@ class WestSignStage(ExecutionStage):
 
     def run(self):
         image = self.description.get('image', 'main')
-        key = self.description.get('key', 'default')
+        # TODO: add default key. The same with other args
+        imgtool_args = {
+            'key': self.description.get('key', 'default'),
+            'header-size': self.description.get('header-size', '0x200'),
+            'align': self.description.get('align', '8'),
+            'version': self.description.get('version', '1.2'),
+            'slot-size': self.description.get('slot_size', '0x67000')
+        }
+
+
         if image == 'main':
             img_path = self.pb.instance.build_dir
         elif self.pb.instance.multi_build:
@@ -55,16 +64,15 @@ class WestSignStage(ExecutionStage):
             # TODO: add error?
             pass
 
-        if key == 'default':
-            # TODO: add default key
-            pass
-
-        command = ["west", "sign", "-d", img_path, "-H", "zephyr.hex", "-t",
+        command = ["west", "sign", "-d", img_path, "--shex", f"{img_path}/zephyr/zephyr.hex", "-t",
                    "imgtool", "-p",
                    "/home/maciej/zephyrproject2/bootloader/mcuboot/scripts/imgtool.py",
-                   "--", "--key", key]
-        run_custom_script(command, timeout=15)
+                   "--"]
+        for k, v in imgtool_args.items():
+            command.extend([f"--{k}", v])
 
+        print(" ".join(command))
+        run_custom_script(command, timeout=15)
 
 class OnTargetStage(ExecutionStage):
     """ TODO: ADD description"""
