@@ -49,10 +49,12 @@ class WestSignStage(ExecutionStage):
         # TODO: add default key. The same with other args
         imgtool_args = {
             'key': self.description.get('key', 'default'),
-            'header-size': self.description.get('header-size', '0x200'),
+            'header-size': self.description.get('header_size', '0x200'),
             'align': self.description.get('align', '8'),
             'version': self.description.get('version', '1.2'),
-            'slot-size': self.description.get('slot_size', '0x67000')
+            'slot-size': self.description.get('slot_size', '0x67000'),
+            'pad': self.description.get('pad', False),
+            'hex-addr': self.description.get('hex-addr', None)
         }
 
 
@@ -69,7 +71,8 @@ class WestSignStage(ExecutionStage):
                    "/home/maciej/zephyrproject2/bootloader/mcuboot/scripts/imgtool.py",
                    "--"]
         for k, v in imgtool_args.items():
-            command.extend([f"--{k}", v])
+            if v == T:
+                command.extend([f"--{k}"])
 
         print(" ".join(command))
         run_custom_script(command, timeout=15)

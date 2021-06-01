@@ -273,6 +273,12 @@ mapping:
                       "key":
                         type: str
                         required: no
+                      "pad":
+                        type: bool
+                        required: no
+                      "hex_addr":
+                        type: str
+                        required: no
                   "OnTarget":
                     type: map
                     required: no
