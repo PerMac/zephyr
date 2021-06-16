@@ -5,6 +5,7 @@ import sys
 logger = logging.getLogger('twister')
 logger.setLevel(logging.DEBUG)
 
+# TODO: Probably the time of execution of the multistaging is incorrect
 
 class ExecutionStage:
     """
@@ -35,8 +36,10 @@ class CallScriptsStage(ExecutionStage):
 
     def run(self):
         for script in self.description:
+            logger.debug(f"Calling: {script}")
             s = script.split()
             run_custom_script(script=s, timeout=15)
+
 
 
 class WestSignStage(ExecutionStage):
@@ -54,7 +57,7 @@ class WestSignStage(ExecutionStage):
             'version': self.description.get('version', '1.2'),
             'slot-size': self.description.get('slot_size', '0x67000'),
             'pad': self.description.get('pad', False),
-            'hex-addr': self.description.get('hex-addr', None)
+            'hex-addr': self.description.get('hex_addr', None)
         }
 
 
@@ -68,17 +71,26 @@ class WestSignStage(ExecutionStage):
 
         command = ["west", "sign", "-d", img_path, "--shex", f"{img_path}/zephyr/zephyr.hex", "-t",
                    "imgtool", "-p",
-                   "/home/maciej/zephyrproject2/bootloader/mcuboot/scripts/imgtool.py",
-                   "--"]
+                   "/home/maciej/zephyrproject2/bootloader/mcuboot/scripts/imgtool.py", "--"
+                   ]
         for k, v in imgtool_args.items():
-            if v == T:
+            if v is None:
+                continue
+            elif v is True:
                 command.extend([f"--{k}"])
+            elif v is False:
+                continue
+            else:
+                command.extend([f"--{k}", f"{v}"])
+        #command.append("--")
 
         print(" ".join(command))
+        # TODO: Add error handling to fail the test if stage/script in stage failed
         run_custom_script(command, timeout=15)
 
 class OnTargetStage(ExecutionStage):
     """ TODO: ADD description"""
+    # TODO: -- runners.nrfjprog: mass erase requested <- solve this
     def __init__(self, description=None, proj_builder=None):
         ExecutionStage.__init__(self, description, proj_builder)
 
@@ -128,8 +140,10 @@ def run_custom_script(script, timeout):
     with subprocess.Popen(script, stderr=subprocess.PIPE,
                           stdout=subprocess.PIPE) as proc:
         try:
-            stdout, _ = proc.communicate(timeout=timeout)
+            stdout, stderr = proc.communicate(timeout=timeout)
             logger.debug(stdout.decode())
+            if stderr:
+                logger.error(stderr.decode())
 
         except subprocess.TimeoutExpired:
             proc.kill()
