@@ -76,7 +76,7 @@ tests:
               - "Bootloader chainload address offset: 0xc000"
               - "Jumping to the first image slot"
               - "Hello World from hello2"
-  mcuboot.rsa.bad:
+  mcuboot.rsa.incorrect:
     integration_platforms:
       - nrf52dk_nrf52832
     stages:
@@ -85,7 +85,7 @@ tests:
           key: /home/maciej/zephyrproject2/bootloader/mcuboot/root-rsa-2048.pem
       - WestSign:
           image: hello2
-          key: /home/maciej/zephyrproject2/bootloader/mcuboot/root-rsa-2048.pem
+          key: /home/maciej/zephyrproject2/bootloader/mcuboot/samples/zephyr/bad-keys/bad-rsa-2048.pem
           pad: true
           hex_addr: "0x73000"
       - OnTarget:
