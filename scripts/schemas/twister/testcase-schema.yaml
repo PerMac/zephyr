@@ -252,6 +252,20 @@ mapping:
           "slow":
             type: bool
             required: no
+          "multi_build":
+            type: seq
+            sequence:
+              - type: map
+                mapping:
+                  "name":
+                    type: str
+                    required: yes
+                  "path":
+                    type: str
+                    required: yes
+                  "extra_args":
+                    type: str
+                    required: no
           "stages":
             type: seq
             required: no
@@ -286,6 +300,9 @@ mapping:
                       "image":
                         type: str
                         required: no
+                      "command":
+                        type: str
+                        required: no
                       "harness":
                         type: str
                         required: no
@@ -317,4 +334,3 @@ mapping:
                               "regex":
                                 type: str
                                 required: no
-

@@ -1,11 +1,15 @@
 import logging
 import subprocess
 import sys
+import os
 
 logger = logging.getLogger('twister')
 logger.setLevel(logging.DEBUG)
 
 # TODO: Probably the time of execution of the multistaging is incorrect
+# TODO: refactor and make abstract steps from DeviceHandler (monitor uart and so on)
+# TODO: Lock the device until all stages done
+# TODO: verify if not to much building is going on
 
 class ExecutionStage:
     """
@@ -13,6 +17,7 @@ class ExecutionStage:
     run method to be implemented
     """
     description = None
+    zephyr_base = os.getenv("ZEPHYR_BASE")
 
     def __init__(self, description=None, proj_builder=None):
         self.description = description
@@ -50,6 +55,7 @@ class WestSignStage(ExecutionStage):
     def run(self):
         image = self.description.get('image', 'main')
         # TODO: add default key. The same with other args
+        imgtool_path = os.path.join(self.zephyr_base, "../bootloader/mcuboot/scripts/imgtool.py")
         imgtool_args = {
             'key': self.description.get('key', 'default'),
             'header-size': self.description.get('header_size', '0x200'),
@@ -60,6 +66,12 @@ class WestSignStage(ExecutionStage):
             'hex-addr': self.description.get('hex_addr', None)
         }
 
+        if imgtool_args['key'] == 'default':
+            imgtool_args['key'] = os.path.join(self.zephyr_base,
+                                               "../bootloader/mcuboot/root-rsa-2048.pem")
+        else:
+            imgtool_args['key'] = os.path.join(self.zephyr_base,
+                                               imgtool_args['key'])
 
         if image == 'main':
             img_path = self.pb.instance.build_dir
@@ -71,7 +83,7 @@ class WestSignStage(ExecutionStage):
 
         command = ["west", "sign", "-d", img_path, "--shex", f"{img_path}/zephyr/zephyr.hex", "-t",
                    "imgtool", "-p",
-                   "/home/maciej/zephyrproject2/bootloader/mcuboot/scripts/imgtool.py", "--"
+                   imgtool_path, "--"
                    ]
         for k, v in imgtool_args.items():
             if v is None:
@@ -97,8 +109,9 @@ class OnTargetStage(ExecutionStage):
     def run(self):
         instance = self.pb.instance
         suite = self.pb.suite
-        image = self.description.get('image', 'main')
-        #instance.build_dir = instance.multi_build[image]['build_dir']
+        image = self.description.get('image', None)
+        command = self.description.get('command', None)
+
         # instance.testcase attributes have to be updated with stage specific data
         for k, v in self.description.items():
             if k in ["harness", "harness_config"]:
@@ -106,10 +119,40 @@ class OnTargetStage(ExecutionStage):
         if instance.handler:
             if instance.handler.type_str == "device":
                 instance.handler.suite = suite
-            instance.handler.build_dir = instance.multi_build[image]['build_dir']
+            if image:
+                instance.handler.build_dir = instance.multi_build[image]['build_dir']
             # We have to update handler.instance to align with image/harness selection
             #instance.handler.instance = instance
-            instance.handler.handle()
+            instance.handler.handle(command=command)
+
+        sys.stdout.flush()
+
+
+class OnTargetCommandStage(ExecutionStage):
+    """ TODO: ADD description"""
+    # TODO: -- runners.nrfjprog: mass erase requested <- solve this
+    def __init__(self, description=None, proj_builder=None):
+        ExecutionStage.__init__(self, description, proj_builder)
+
+    def run(self):
+        instance = self.pb.instance
+        suite = self.pb.suite
+        image = self.description.get('image', 'main')
+        command = self.description.get('command', None)
+
+        # instance.testcase attributes have to be updated with stage specific data
+        for k, v in self.description.items():
+            if k in ["harness", "harness_config"]:
+                setattr(instance.testcase, k, v)
+        if instance.handler:
+            if instance.handler.type_str == "device":
+                instance.handler.suite = suite
+
+
+            #instance.handler.build_dir = instance.multi_build[image]['build_dir']
+            # We have to update handler.instance to align with image/harness selection
+            #instance.handler.instance = instance
+            instance.handler.handle(command=command)
 
         sys.stdout.flush()
 
@@ -137,6 +180,7 @@ class StageContainer:
 
 
 def run_custom_script(script, timeout):
+    # TODP: If error report test error and break test
     with subprocess.Popen(script, stderr=subprocess.PIPE,
                           stdout=subprocess.PIPE) as proc:
         try:
