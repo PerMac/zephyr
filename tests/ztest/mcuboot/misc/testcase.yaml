@@ -32,7 +32,7 @@ tests:
             type: multi_line
             regex:
               - "Starting bootloader"
-              - "Boot source: none"
+              - "Swap type: none"
               - "Unable to find bootable image"
       - OnTarget:
           image: hello1
@@ -104,7 +104,7 @@ tests:
               - "Secondary image: magic=unset, swap_type=0x1, copy_done=0x3, image_ok=0x3"
               - "Boot source: none"
               - "Failed reading image headers; Image=0"
-              - "bad image magic 0x200019b0; Image=0"
+              - "bad image magic"
               - "Unable to find bootable image"
       - OnTarget:
           image: hello1
