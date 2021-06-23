@@ -42,7 +42,7 @@ tests:
             regex:
               - "Starting bootloader"
               - "Swap type: none"
-              - "Bootloader chainload address offset: 0xc000"
+              - "Bootloader chainload address offset:" #for nrf52840  0xc000
               - "Jumping to the first image slot"
               - "Hello World from hello1"
       - OnTarget:
@@ -56,7 +56,7 @@ tests:
               - "Image upgrade secondary slot -> primary slot"
               - "Erasing the primary slot"
               - "Copying the secondary slot to the primary slot: 0x4638 bytes"
-              - "Bootloader chainload address offset: 0xc000"
+              - "Bootloader chainload address offset:" #for nrf52840  0xc000
               - "Jumping to the first image slot"
               - "Hello World from hello2"
       - OnTarget:
@@ -67,7 +67,7 @@ tests:
             regex:
               - "Starting bootloader"
               - "Swap type: none"
-              - "Bootloader chainload address offset: 0xc000"
+              - "Bootloader chainload address offset:" #for nrf52840  0xc000
               - "Jumping to the first image slot"
               - "Hello World from hello2"
 
@@ -117,7 +117,7 @@ tests:
               - "Secondary image: magic=unset, swap_type=0x1, copy_done=0x3, image_ok=0x3"
               - "Boot source: none"
               - "Swap type: none"
-              - "Bootloader chainload address offset: 0xc000"
+              - "Bootloader chainload address offset:" #for nrf52840  0xc000
               - "Jumping to the first image slot"
               - "Hello World from hello1"
       - OnTarget:
@@ -132,7 +132,7 @@ tests:
               - "Boot source: none"
               - "Swap type: test"
               - "Image in the secondary slot is not valid!"
-              - "Bootloader chainload address offset: 0xc000"
+              - "Bootloader chainload address offset:" #for nrf52840  0xc000
               - "Jumping to the first image slot"
               - "Hello World from hello1"
       - OnTarget:
@@ -146,7 +146,7 @@ tests:
               - "Secondary image: magic=unset, swap_type=0x1, copy_done=0x3, image_ok=0x3"
               - "Boot source: none"
               - "Swap type: none"
-              - "Bootloader chainload address offset: 0xc000"
+              - "Bootloader chainload address offset:" #for nrf52840  0xc000
               - "Jumping to the first image slot"
               - "Hello World from hello1"
 

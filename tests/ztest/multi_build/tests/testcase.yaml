@@ -59,7 +59,7 @@ tests:
               - "Secondary image: magic=unset, swap_type=0x1, copy_done=0x3, image_ok=0x3"
               - "Boot source: none"
               - "Swap type: none"
-              - "Bootloader chainload address offset: 0xc000"
+              - "Bootloader chainload address offset:" # for nrf52840 0xc000
               - "Jumping to the first image slot"
               - "Hello World from hello1"
       - OnTarget:
@@ -73,7 +73,7 @@ tests:
               - "Secondary image: magic=good, swap_type=0x1, copy_done=0x3, image_ok=0x3"
               - "Boot source: none"
               - "Swap type: test"
-              - "Bootloader chainload address offset: 0xc000"
+              - "Bootloader chainload address offset:" # for nrf52840 0xc000
               - "Jumping to the first image slot"
               - "Hello World from hello2"
   mcuboot.rsa.incorrect:
@@ -111,7 +111,7 @@ tests:
               - "Secondary image: magic=unset, swap_type=0x1, copy_done=0x3, image_ok=0x3"
               - "Boot source: none"
               - "Swap type: none"
-              - "Bootloader chainload address offset: 0xc000"
+              - "Bootloader chainload address offset:" # for nrf52840 0xc000
               - "Jumping to the first image slot"
               - "Hello World from hello1"
       - OnTarget:
@@ -125,6 +125,6 @@ tests:
               - "Secondary image: magic=good, swap_type=0x1, copy_done=0x3, image_ok=0x3"
               - "Boot source: none"
               - "Swap type: test"
-              - "Bootloader chainload address offset: 0xc000"
+              - "Bootloader chainload address offset:" # for nrf52840 0xc000
               - "Jumping to the first image slot"
               - "Hello World from hello2"

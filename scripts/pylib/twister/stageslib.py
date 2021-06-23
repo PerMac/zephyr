@@ -1,3 +1,7 @@
+#!/usr/bin/env python3
+# Copyright (c) 2021 NXP Corp.
+# SPDX-License-Identifier: Apache-2.0
+
 import logging
 import subprocess
 import sys
@@ -6,20 +10,22 @@ import os
 logger = logging.getLogger('twister')
 logger.setLevel(logging.DEBUG)
 
+ZEPHYR_BASE = os.getenv("ZEPHYR_BASE")
 # TODO: Probably the time of execution of the multistaging is incorrect
 # TODO: refactor and make abstract steps from DeviceHandler (monitor uart and so on)
 # TODO: Lock the device until all stages done
 # TODO: verify if not to much building is going on
 
-class ExecutionStage:
-    """
-    Abstract class for test execution stages. Each inhering stage requires
-    run method to be implemented
-    """
-    description = None
-    zephyr_base = os.getenv("ZEPHYR_BASE")
 
+class ExecutionStage:
+    """Abstract class for test execution stages."""
     def __init__(self, description=None, proj_builder=None):
+        """
+
+        :param str description: description of a stage read from yaml
+        :param proj_builder:
+        :type proj_builder:
+        """
         self.description = description
         if proj_builder:
             self.pb = proj_builder
@@ -46,16 +52,17 @@ class CallScriptsStage(ExecutionStage):
             run_custom_script(script=s, timeout=15)
 
 
-
 class WestSignStage(ExecutionStage):
     """ TODO: ADD description"""
+
     def __init__(self, description=None, proj_builder=None):
         ExecutionStage.__init__(self, description, proj_builder)
 
     def run(self):
         image = self.description.get('image', 'main')
         # TODO: add default key. The same with other args
-        imgtool_path = os.path.join(self.zephyr_base, "../bootloader/mcuboot/scripts/imgtool.py")
+        imgtool_path = os.path.join(self.zephyr_base,
+                                    "../bootloader/mcuboot/scripts/imgtool.py")
         imgtool_args = {
             'key': self.description.get('key', 'default'),
             'header-size': self.description.get('header_size', '0x200'),
@@ -81,7 +88,8 @@ class WestSignStage(ExecutionStage):
             # TODO: add error?
             pass
 
-        command = ["west", "sign", "-d", img_path, "--shex", f"{img_path}/zephyr/zephyr.hex", "-t",
+        command = ["west", "sign", "-d", img_path, "--shex",
+                   f"{img_path}/zephyr/zephyr.hex", "-t",
                    "imgtool", "-p",
                    imgtool_path, "--"
                    ]
@@ -94,14 +102,16 @@ class WestSignStage(ExecutionStage):
                 continue
             else:
                 command.extend([f"--{k}", f"{v}"])
-        #command.append("--")
+        # command.append("--")
 
         print(" ".join(command))
         # TODO: Add error handling to fail the test if stage/script in stage failed
         run_custom_script(command, timeout=15)
 
+
 class OnTargetStage(ExecutionStage):
     """ TODO: ADD description"""
+
     # TODO: -- runners.nrfjprog: mass erase requested <- solve this
     def __init__(self, description=None, proj_builder=None):
         ExecutionStage.__init__(self, description, proj_builder)
@@ -120,9 +130,11 @@ class OnTargetStage(ExecutionStage):
             if instance.handler.type_str == "device":
                 instance.handler.suite = suite
             if image:
-                instance.handler.build_dir = instance.multi_build[image]['build_dir']
+                instance.handler.build_dir = instance.multi_build[image][
+                    'build_dir']
             # We have to update handler.instance to align with image/harness selection
-            #instance.handler.instance = instance
+
+            # instance.handler.instance = instance
             instance.handler.handle(command=command)
 
         sys.stdout.flush()
@@ -130,6 +142,7 @@ class OnTargetStage(ExecutionStage):
 
 class OnTargetCommandStage(ExecutionStage):
     """ TODO: ADD description"""
+
     # TODO: -- runners.nrfjprog: mass erase requested <- solve this
     def __init__(self, description=None, proj_builder=None):
         ExecutionStage.__init__(self, description, proj_builder)
@@ -148,10 +161,10 @@ class OnTargetCommandStage(ExecutionStage):
             if instance.handler.type_str == "device":
                 instance.handler.suite = suite
 
-
-            #instance.handler.build_dir = instance.multi_build[image]['build_dir']
-            # We have to update handler.instance to align with image/harness selection
-            #instance.handler.instance = instance
+            # instance.handler.build_dir = instance.multi_build[image]['build_dir']
+            # We have to update handler.instance to align with image/harness
+            # selection
+            # instance.handler.instance = instance
             instance.handler.handle(command=command)
 
         sys.stdout.flush()
