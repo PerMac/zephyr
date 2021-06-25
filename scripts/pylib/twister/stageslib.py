@@ -20,12 +20,7 @@ ZEPHYR_BASE = os.getenv("ZEPHYR_BASE")
 class ExecutionStage:
     """Abstract class for test execution stages."""
     def __init__(self, description=None, proj_builder=None):
-        """
-
-        :param str description: description of a stage read from yaml
-        :param proj_builder:
-        :type proj_builder:
-        """
+        """Abstract constructor of a Stage object"""
         self.description = description
         if proj_builder:
             self.pb = proj_builder
@@ -34,14 +29,19 @@ class ExecutionStage:
         """Define procedure to be executed at a given stage.
 
         Must be implemented in sub classes. Defines actions taken during a given
-        stage
+        stage.
         """
         raise NotImplementedError(f"{self.__class__.__name__}.run()")
 
+    def report_error(self, message):
+        """ Report error and set the handler status"""
+        logger.error(message)
+        self.pb.instance.handler.state = "failed"
+        self.pb.instance.reason = message
+
 
 class CallScriptsStage(ExecutionStage):
-    """ TODO: ADD description"""
-
+    """Stage for running a user-defined script."""
     def __init__(self, description=None, proj_builder=None):
         ExecutionStage.__init__(self, description)
 
@@ -53,15 +53,15 @@ class CallScriptsStage(ExecutionStage):
 
 
 class WestSignStage(ExecutionStage):
-    """ TODO: ADD description"""
-
+    """ Stage for signing an image using west sign and imgtool."""
     def __init__(self, description=None, proj_builder=None):
         ExecutionStage.__init__(self, description, proj_builder)
 
     def run(self):
+        """Run west sign with arguments that can be defined in description"""
+        # 'image' tells twister which image to sign
         image = self.description.get('image', 'main')
-        # TODO: add default key. The same with other args
-        imgtool_path = os.path.join(self.zephyr_base,
+        imgtool_path = os.path.join(ZEPHYR_BASE,
                                     "../bootloader/mcuboot/scripts/imgtool.py")
         imgtool_args = {
             'key': self.description.get('key', 'default'),
@@ -74,19 +74,23 @@ class WestSignStage(ExecutionStage):
         }
 
         if imgtool_args['key'] == 'default':
-            imgtool_args['key'] = os.path.join(self.zephyr_base,
+            imgtool_args['key'] = os.path.join(ZEPHYR_BASE,
                                                "../bootloader/mcuboot/root-rsa-2048.pem")
         else:
-            imgtool_args['key'] = os.path.join(self.zephyr_base,
+            imgtool_args['key'] = os.path.join(ZEPHYR_BASE,
                                                imgtool_args['key'])
 
-        if image == 'main':
+        if self.pb.instance.multi_build:
+            try:
+                img_path = self.pb.instance.multi_build[image]['build_dir']
+            except KeyError:
+                self.report_error(f"Image {image} not defined in multi_build")
+                raise Exception("Stage error")
+        elif image == 'main':
             img_path = self.pb.instance.build_dir
-        elif self.pb.instance.multi_build:
-            img_path = self.pb.instance.multi_build[image]['build_dir']
         else:
-            # TODO: add error?
-            pass
+            self.report_error(f"Unknown image to sign: {image}")
+            raise Exception("Stage error")
 
         command = ["west", "sign", "-d", img_path, "--shex",
                    f"{img_path}/zephyr/zephyr.hex", "-t",

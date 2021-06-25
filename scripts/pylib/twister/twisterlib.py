@@ -2418,7 +2418,11 @@ class ProjectBuilder(FilterBuilder):
             logger.debug("run test: %s" % self.instance.name)
             if self.stages:
                 for stage in self.stages:
-                    stage.run()
+                    try:
+                        stage.run()
+                    except:
+                        logger.error(f"{type(stage).__name__} failed")
+                        break
             else:
                 self.run()
             self.instance.status, _ = self.instance.handler.get_state()
