@@ -685,18 +685,6 @@ class DeviceHandler(Handler):
             if d.serial == serial or d.serial_pty:
                 d.available = 1
 
-    @staticmethod
-    def run_custom_script(script, timeout):
-        with subprocess.Popen(script, stderr=subprocess.PIPE, stdout=subprocess.PIPE) as proc:
-            try:
-                stdout, _ = proc.communicate(timeout=timeout)
-                logger.debug(stdout.decode())
-
-            except subprocess.TimeoutExpired:
-                proc.kill()
-                proc.communicate()
-                logger.error("{} timed out".format(script))
-
     def handle(self, command=None):
         out_state = "failed"
         runner = None
@@ -725,9 +713,12 @@ class DeviceHandler(Handler):
 
         logger.debug("Using serial device {}".format(serial_device))
 
+        # command is used to be able to replace the default command builder with
+        # user-defined one, e.g. to reset the board, and still be able to monitor uart
         if command:
             command = command.split()
         else:
+            # TODO: this might be extracted as an individual method, for clarity and modularity
             if (self.suite.west_flash is not None) or runner:
                 command = ["west", "flash", "--skip-rebuild", "-d", self.build_dir]
                 command_extra_args = []
@@ -778,7 +769,10 @@ class DeviceHandler(Handler):
         post_script = hardware.post_script
 
         if pre_script:
-            stageslib.run_custom_script(pre_script, 30)
+            try:
+                stageslib.run_custom_script(pre_script, 30)
+            except Exception as ex:
+                logger.error(ex)
 
         try:
             ser = serial.Serial(
@@ -842,7 +836,10 @@ class DeviceHandler(Handler):
             os.write(write_pipe, b'x')  # halt the thread
 
         if post_flash_script:
-            stageslib.run_custom_script(post_flash_script, 30)
+            try:
+                stageslib.run_custom_script(post_flash_script, 30)
+            except Exception as ex:
+                logger.error(ex)
 
         t.join(self.timeout)
         if t.is_alive():
@@ -891,7 +888,10 @@ class DeviceHandler(Handler):
             self.set_state(out_state, handler_time)
 
         if post_script:
-            stageslib.run_custom_script(post_script, 30)
+            try:
+                stageslib.run_custom_script(post_script, 30)
+            except Exception as ex:
+                logger.error(ex)
 
         self.make_device_available(serial_device)
         self.record(harness)
@@ -1628,7 +1628,7 @@ class TestCase(DisablePyTestCollectionMixin):
         self.harness_config = {}
         self.build_only = True
         self.build_on_all = False
-        self.multi_build = []
+        self.images = []
         self.extra_build_configs = {}
         self.slow = False
         self.min_ram = -1
@@ -1784,23 +1784,16 @@ class TestInstance(DisablePyTestCollectionMixin):
         self.name = os.path.join(platform.name, testcase.name)
         self.build_dir = os.path.join(outdir, platform.name, testcase.name)
 
-        self.multi_build = {}
-        if testcase.multi_build:
-            self.main_source = testcase.source_dir
-            self.main_build = self.build_dir
-            for image in testcase.multi_build:
-                # Each image form multi_build has two stages, as regular images:
-                # 'cmake' and 'build'. Needed for piping in ProjectBuilder.
-                self.multi_build[image['name']] = {
-                    'cmake': False,
-                    'build': False,
-                    'build_dir': os.path.normpath(os.path.join(self.main_build, image['name'])),
-                    'source_dir': os.path.normpath(os.path.join(self.main_source, image['path'])),
-                    'extra_args': image.get('extra_args', None)
-                }
+        # multiple_build object handles switching between the images
+        self.multi_build = None
+        if testcase.images:
+            self.multi_build = stageslib.MultiImage(
+                build_dir=self.build_dir,
+                source_dir=self.testcase.source_dir,
+                images=self.testcase.images
+            )
 
         self.run = False
-
         self.results = {}
 
     def __getstate__(self):
@@ -2214,7 +2207,10 @@ class ProjectBuilder(FilterBuilder):
         self.instance = instance
         self.suite = suite
         self.filtered_tests = 0
-        self.multi_build = instance.multi_build
+
+        self.multi_build = None
+        if self.instance.multi_build:
+            self.multi_build = self.instance.multi_build
 
         self.stages = []
         if self.instance.testcase.stages:
@@ -2324,44 +2320,15 @@ class ProjectBuilder(FilterBuilder):
             instance.handler.generator_cmd = self.generator_cmd
             instance.handler.generator = self.generator
 
-    def image_selector(self, message, selected_img=None):
-        # The build process, call cmake and build with configured generator
-        # For multi_build cmake and build steps will be repeated for each image individually
-        # Store the original self.source_dir and self.build_dir. These values
-        # are replaced for each image in the loop below.
-
-        # If multi_build then we manage the process by toggling sub images and
-        # their statuses. The loop of 'cmake' and 'build' will continue until
-        # all subimages has both 'cmake' and 'build' statuses true.
-        # TODO: Dont scan all every time, do some pop
-        for image in self.multi_build:
-            if selected_img and selected_img != image:
-                continue
-            self.source_dir = self.multi_build[image]['source_dir']
-            self.build_dir = self.multi_build[image]['build_dir']
-            if self.multi_build[image]['extra_args']:
-                self.extra_args = [self.multi_build[image]['extra_args']]
-            else:
-                self.extra_args = []
-            if not self.multi_build[image]['cmake']:
-                op = "cmake"
-                active_image = image
-                break
-            elif not self.multi_build[image]['build']:
-                op = "build"
-                active_image = image
-                break
-            active_image = 'main'
-            op = message.get('op')
-        return active_image, op
-
     def process(self, pipeline, done, message, lock, results):
 
         op = message.get('op')
 
-        # If multi_build: chose an active image and select a stage of the process.
+        # If multi_build: choose an active image and select a stage of the process.
+        # Overwrite ProjectBuilder args to toggle between images.
         if self.multi_build:
-            active_image, op = self.image_selector(message)
+            active_image, op, args_for_pb = self.multi_build.image_toggler(message)
+            self.source_dir, self.build_dir, self.extra_args = args_for_pb
 
         if not self.instance.handler:
             self.setup_handler()
@@ -2369,7 +2336,7 @@ class ProjectBuilder(FilterBuilder):
         if op == "cmake":
             res = self.cmake()
             if self.multi_build:
-                self.multi_build[active_image]['cmake'] = True
+                self.multi_build.images[active_image].cmake_done = True
             if self.instance.status in ["failed", "error"]:
                 pipeline.put({"op": "report", "test": self.instance})
             elif self.cmake_only:
@@ -2392,7 +2359,7 @@ class ProjectBuilder(FilterBuilder):
             logger.debug("build test: %s" % self.instance.name)
             res = self.build()
             if self.multi_build:
-                self.multi_build[active_image]['build'] = True
+                self.multi_build.images[active_image].build_done = True
 
             if not res:
                 self.instance.status = "error"
@@ -2656,7 +2623,7 @@ class TestSuite(DisablePyTestCollectionMixin):
                        "extra_configs": {"type": "list"},
                        "build_only": {"type": "bool", "default": False},
                        "build_on_all": {"type": "bool", "default": False},
-                       "multi_build": {"type": "list", "default": []},
+                       "images": {"type": "list", "default": []},
                        "extra_build_configs": {"type": "list", "default": []},
                        "skip": {"type": "bool", "default": False},
                        "slow": {"type": "bool", "default": False},
@@ -3038,7 +3005,7 @@ class TestSuite(DisablePyTestCollectionMixin):
                             raise Exception('Harness config error: console harness defined without a configuration.')
                         tc.build_only = tc_dict["build_only"]
                         tc.build_on_all = tc_dict["build_on_all"]
-                        tc.multi_build = tc_dict["multi_build"]
+                        tc.images = tc_dict["images"]
                         tc.extra_build_configs = tc_dict["extra_build_configs"]
                         tc.slow = tc_dict["slow"]
                         tc.min_ram = tc_dict["min_ram"]

@@ -26,7 +26,7 @@ mapping:
       "build_on_all":
         type: bool
         required: no
-      "multi_build":
+      "images":
         type: seq
         sequence:
           - type: map
@@ -252,7 +252,7 @@ mapping:
           "slow":
             type: bool
             required: no
-          "multi_build":
+          "images":
             type: seq
             sequence:
               - type: map

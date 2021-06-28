@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# Copyright (c) 2021 NXP Corp.
+# Copyright (c) 2021 Nordic Semiconductor ASA
 # SPDX-License-Identifier: Apache-2.0
 
 import logging
@@ -11,16 +11,71 @@ logger = logging.getLogger('twister')
 logger.setLevel(logging.DEBUG)
 
 ZEPHYR_BASE = os.getenv("ZEPHYR_BASE")
-# TODO: Probably the time of execution of the multistaging is incorrect
-# TODO: refactor and make abstract steps from DeviceHandler (monitor uart and so on)
-# TODO: Lock the device until all stages done
-# TODO: verify if not to much building is going on
+# TODO: The time of execution of the multistaging is incorrect
+# TODO: DeviceHandler.handle() needs to be refactored so we can lock the device until all stages are done
+
+
+class Image:
+    """Store information about an image and statuses of its stages"""
+    def __init__(self, image, main_build, main_source):
+        self.name = image['name']
+        self.path = image['path']
+        self.extra_args = image.get('extra_args', None)
+        if self.extra_args:
+            self.extra_args = [self.extra_args]
+        else:
+            self.extra_args = []
+        # Each image has two stages, as regular images:
+        # 'cmake' and 'build'. Needed for piping in ProjectBuilder.
+        self.cmake_done = False
+        self.build_done = False
+        self.build_dir = os.path.normpath(os.path.join(main_build, self.name))
+        self.source_dir = os.path.normpath(os.path.join(main_source, self.path))
+
+    def get_args_for_pb(self):
+        """Return args to switch the active image in ProjectBuilder"""
+        args_for_pb = [
+            self.source_dir,
+            self.build_dir,
+            self.extra_args
+        ]
+        return args_for_pb
+
+
+class MultiImage:
+    """Handle tests with multiple images"""
+    def __init__(self, build_dir, source_dir, images):
+        self.main_source = source_dir
+        self.main_build = build_dir
+        self.images = {}
+        for image in images:
+            self.images[image['name']] = Image(image, self.main_build, self.main_source)
+
+    def image_toggler(self, message):
+        """Toggle between images and stages until all images have cmake and build stages done"""
+        # TODO: This can be improved so the loop doesnt always start from the beginning
+        for image in self.images:
+            args_for_pb = self.images[image].get_args_for_pb()
+            if not self.images[image].cmake_done:
+                op = "cmake"
+                active_image = image
+                break
+            elif not self.images[image].build_done:
+                op = "build"
+                active_image = image
+                break
+        else:
+            # If we got to this place it means all images have all their stages
+            # done and the original op can be proceed
+            active_image = 'main'
+            op = message.get('op')
+        return active_image, op, args_for_pb
 
 
 class ExecutionStage:
     """Abstract class for test execution stages."""
     def __init__(self, description=None, proj_builder=None):
-        """Abstract constructor of a Stage object"""
+        """Abstract constructor"""
         self.description = description
         if proj_builder:
             self.pb = proj_builder
@@ -43,13 +98,18 @@ class ExecutionStage:
 class CallScriptsStage(ExecutionStage):
     """Stage for running a user-defined script."""
     def __init__(self, description=None, proj_builder=None):
-        ExecutionStage.__init__(self, description)
+        ExecutionStage.__init__(self, description, proj_builder)
 
     def run(self):
+        """Execute user-defined script"""
         for script in self.description:
             logger.debug(f"Calling: {script}")
             s = script.split()
-            run_custom_script(script=s, timeout=15)
+            try:
+                run_custom_script(script=s, timeout=15)
+            except Exception as ex:
+                logger.error(ex)
+                self.report_error("Script error")
 
 
 class WestSignStage(ExecutionStage):
@@ -82,10 +142,9 @@ class WestSignStage(ExecutionStage):
 
         if self.pb.instance.multi_build:
             try:
-                img_path = self.pb.instance.multi_build[image]['build_dir']
+                img_path = self.pb.instance.multi_build.images[image].build_dir
             except KeyError:
                 self.report_error(f"Image {image} not defined in multi_build")
-                raise Exception("Stage error")
         elif image == 'main':
             img_path = self.pb.instance.build_dir
         else:
@@ -109,18 +168,22 @@ class WestSignStage(ExecutionStage):
         # command.append("--")
 
         print(" ".join(command))
-        # TODO: Add error handling to fail the test if stage/script in stage failed
-        run_custom_script(command, timeout=15)
+        try:
+            run_custom_script(command, timeout=15)
+        except Exception as ex:
+            logger.error(ex)
+            self.report_error("Script error")
 
 
 class OnTargetStage(ExecutionStage):
-    """ TODO: ADD description"""
-
-    # TODO: -- runners.nrfjprog: mass erase requested <- solve this
     def __init__(self, description=None, proj_builder=None):
         ExecutionStage.__init__(self, description, proj_builder)
 
     def run(self):
+        """Execute the the test on target.
+
+        As in ProjectBuilder.run() but with MultiImage support
+        """
         instance = self.pb.instance
         suite = self.pb.suite
         image = self.description.get('image', None)
@@ -130,45 +193,14 @@ class OnTargetStage(ExecutionStage):
         for k, v in self.description.items():
             if k in ["harness", "harness_config"]:
                 setattr(instance.testcase, k, v)
+
+        # As in ProjectBuilder.run()
         if instance.handler:
             if instance.handler.type_str == "device":
                 instance.handler.suite = suite
+            # Point to image's build dir
             if image:
-                instance.handler.build_dir = instance.multi_build[image][
-                    'build_dir']
-            # We have to update handler.instance to align with image/harness selection
-
-            # instance.handler.instance = instance
-            instance.handler.handle(command=command)
-
-        sys.stdout.flush()
-
-
-class OnTargetCommandStage(ExecutionStage):
-    """ TODO: ADD description"""
-
-    # TODO: -- runners.nrfjprog: mass erase requested <- solve this
-    def __init__(self, description=None, proj_builder=None):
-        ExecutionStage.__init__(self, description, proj_builder)
-
-    def run(self):
-        instance = self.pb.instance
-        suite = self.pb.suite
-        image = self.description.get('image', 'main')
-        command = self.description.get('command', None)
-
-        # instance.testcase attributes have to be updated with stage specific data
-        for k, v in self.description.items():
-            if k in ["harness", "harness_config"]:
-                setattr(instance.testcase, k, v)
-        if instance.handler:
-            if instance.handler.type_str == "device":
-                instance.handler.suite = suite
-
-            # instance.handler.build_dir = instance.multi_build[image]['build_dir']
-            # We have to update handler.instance to align with image/harness
-            # selection
-            # instance.handler.instance = instance
+                instance.handler.build_dir = instance.multi_build.images[image].build_dir
             instance.handler.handle(command=command)
 
         sys.stdout.flush()
@@ -188,25 +220,24 @@ class StageContainer:
         for stage in self.pb.instance.testcase.stages:
             (name, description), = stage.items()
             # This will create a stage object of a type given in the name
-            # e.g. for name=CallScript CallScriptStage(description) object
+            # e.g. for name=CallScript: CallScriptStage(description) object
             # will be created
             ev = f"{name}Stage(description, self.pb)"
             stages.append(eval(ev))
-
         return stages
 
 
 def run_custom_script(script, timeout):
-    # TODP: If error report test error and break test
     with subprocess.Popen(script, stderr=subprocess.PIPE,
                           stdout=subprocess.PIPE) as proc:
         try:
             stdout, stderr = proc.communicate(timeout=timeout)
             logger.debug(stdout.decode())
             if stderr:
-                logger.error(stderr.decode())
+                raise Exception(stderr.decode())
 
         except subprocess.TimeoutExpired:
             proc.kill()
             proc.communicate()
             logger.error("{} timed out".format(script))
+            raise TimeoutError

@@ -4,7 +4,7 @@ common:
 
 tests:
   mcuboot.misc.overwrite:
-    multi_build:
+    images:
       - name: bootloader
         path: ../../../../../bootloader/mcuboot/boot/zephyr
         extra_args: OVERLAY_CONFIG=../../samples/zephyr/overlay-upgrade-only.conf
@@ -55,7 +55,7 @@ tests:
               - "Swap type: test"
               - "Image upgrade secondary slot -> primary slot"
               - "Erasing the primary slot"
-              - "Copying the secondary slot to the primary slot: 0x4638 bytes"
+              - "Copying the secondary slot to the primary slot:" #for nrf52840  0x4638 bytes?
               - "Bootloader chainload address offset:" #for nrf52840  0xc000
               - "Jumping to the first image slot"
               - "Hello World from hello2"
@@ -72,7 +72,7 @@ tests:
               - "Hello World from hello2"
 
   mcuboot.rsa.no_bootcheck:
-    multi_build:
+    images:
       - name: bootloader
         path: ../../../../../bootloader/mcuboot/boot/zephyr
         extra_args: OVERLAY_CONFIG=../../samples/zephyr/overlay-skip-primary-slot-validate.conf

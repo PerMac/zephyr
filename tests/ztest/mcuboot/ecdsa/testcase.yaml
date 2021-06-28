@@ -1,7 +1,7 @@
 common:
   timeout: 9999
   tags: mcuboot ecdsa
-  multi_build:
+  images:
     - name: bootloader
       path: ../../../../../bootloader/mcuboot/boot/zephyr
       extra_args: OVERLAY_CONFIG=../../samples/zephyr/overlay-ecdsa-p256.conf
