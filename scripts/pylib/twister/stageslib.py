@@ -6,6 +6,7 @@ import logging
 import subprocess
 import sys
 import os
+import yaml
 
 logger = logging.getLogger('twister')
 logger.setLevel(logging.DEBUG)
@@ -123,7 +124,28 @@ class WestSignStage(ExecutionStage):
         image = self.description.get('image', 'main')
         imgtool_path = os.path.join(ZEPHYR_BASE,
                                     "../bootloader/mcuboot/scripts/imgtool.py")
-        imgtool_args = {
+
+        # Load args for signing an image
+        img_arg_path = (os.path.join(self.pb.source_dir, "imgtool_conf.yaml"))
+
+        with open(img_arg_path, 'r') as file:
+            try:
+                imgtool_args_file = yaml.safe_load(file)
+            except yaml.YAMLError as exc:
+                logger.error(exc)
+
+        # Load default imgtool args from file
+        imgtool_args = imgtool_args_file['default']
+
+        # Load platform-specific args if needed
+        if self.pb.instance.platform.name in imgtool_args_file:
+            imgtool_args.update(imgtool_args_file[self.pb.instance.platform.name])
+
+        # Update imgtool args if they are given in a stage description
+        if 'imgtool_args' in self.description:
+            imgtool_args.update(self.description['imgtool_args'])
+
+        """imgtool_args = {
             'key': self.description.get('key', 'default'),
             'header-size': self.description.get('header_size', '0x200'),
             'align': self.description.get('align', '8'),
@@ -131,7 +153,7 @@ class WestSignStage(ExecutionStage):
             'slot-size': self.description.get('slot_size', '0x67000'),
             'pad': self.description.get('pad', False),
             'hex-addr': self.description.get('hex_addr', None)
-        }
+        }"""
 
         if imgtool_args['key'] == 'default':
             imgtool_args['key'] = os.path.join(ZEPHYR_BASE,
@@ -157,17 +179,18 @@ class WestSignStage(ExecutionStage):
                    imgtool_path, "--"
                    ]
         for k, v in imgtool_args.items():
+            arg = f'--{k.replace("_", "-")}'
             if v is None:
                 continue
             elif v is True:
-                command.extend([f"--{k}"])
+                command.extend([arg])
             elif v is False:
                 continue
             else:
-                command.extend([f"--{k}", f"{v}"])
+                command.extend([arg, f"{v}"])
         # command.append("--")
 
-        print(" ".join(command))
+        logger.debug(" ".join(command))
         try:
             run_custom_script(command, timeout=15)
         except Exception as ex:
@@ -210,6 +233,7 @@ class StageContainer:
     def __init__(self, proj_builder):
         self.pb = proj_builder
         self.stages = self.get_stages()
+        self.total_time = 0
 
     def __iter__(self):
         for stage in self.stages:

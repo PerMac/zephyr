@@ -2387,9 +2387,16 @@ class ProjectBuilder(FilterBuilder):
                 for stage in self.stages:
                     try:
                         stage.run()
-                    except:
+                        _, stage_time = self.instance.handler.get_state()
+                        self.stages.total_time += stage_time
+                    except Exception as ex:
                         logger.error(f"{type(stage).__name__} failed")
+                        logger.error(ex)
+                        self.instance.handler.state = "failed"
+                        self.instance.reason = ex.args[0]
                         break
+                else:
+                    self.instance.handler.duration = self.stages.total_time
             else:
                 self.run()
             self.instance.status, _ = self.instance.handler.get_state()

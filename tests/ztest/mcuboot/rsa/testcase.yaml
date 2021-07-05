@@ -19,12 +19,14 @@ tests:
     stages:
       - WestSign:
           image: hello1
-          key: ../bootloader/mcuboot/root-rsa-2048.pem
+          imgtool_args:
+            key: ../bootloader/mcuboot/root-rsa-2048.pem
       - WestSign:
           image: hello2
-          key: ../bootloader/mcuboot/root-rsa-2048.pem
-          pad: true
-          hex_addr: "0x73000"
+          imgtool_args:
+            key: ../bootloader/mcuboot/root-rsa-2048.pem
+            pad: true
+            hex_addr: "0x73000"
       - OnTarget:
           image: bootloader
           harness: console
@@ -86,12 +88,14 @@ tests:
     stages:
       - WestSign:
           image: hello1
-          key: ../bootloader/mcuboot/root-rsa-2048.pem
+          imgtool_args:
+            key: ../bootloader/mcuboot/root-rsa-2048.pem
       - WestSign:
           image: hello2
-          key: ../bootloader/mcuboot/root-ec-p256.pem
-          pad: true
-          hex_addr: "0x73000"
+          imgtool_args:
+            key: ../bootloader/mcuboot/root-ec-p256.pem
+            pad: true
+            hex_addr: "0x73000"
       - OnTarget:
           image: bootloader
           harness: console
@@ -154,12 +158,14 @@ tests:
     stages:
       - WestSign:
           image: hello1
-          key: ../bootloader/mcuboot/root-rsa-2048.pem
+          imgtool_args:
+            key: ../bootloader/mcuboot/root-rsa-2048.pem
       - WestSign:
           image: hello2
-          key: ../bootloader/mcuboot/samples/zephyr/bad-keys/bad-rsa-2048.pem
-          pad: true
-          hex_addr: "0x73000"
+          imgtool_args:
+            key: ../bootloader/mcuboot/samples/zephyr/bad-keys/bad-rsa-2048.pem
+            pad: true
+            hex_addr: "0x73000"
       - OnTarget:
           image: bootloader
           harness: console

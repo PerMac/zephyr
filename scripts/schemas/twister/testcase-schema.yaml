@@ -284,15 +284,19 @@ mapping:
                       "image":
                         type: str
                         required: no
-                      "key":
-                        type: str
+                      "imgtool_args":
+                        type: map
                         required: no
-                      "pad":
-                        type: bool
-                        required: no
-                      "hex_addr":
-                        type: str
-                        required: no
+                        mapping:
+                          "key":
+                            type: str
+                            required: no
+                          "pad":
+                            type: bool
+                            required: no
+                          "hex_addr":
+                            type: str
+                            required: no
                   "OnTarget":
                     type: map
                     required: no
