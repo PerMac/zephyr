@@ -13,10 +13,10 @@ from typing import Generator
 
 import serial
 
-from device_adapter.device.device_abstract import DeviceAbstract
-from device_adapter.device_adapter_config import DeviceConfig
-from device_adapter.exceptions import DeviceAdapterException
-from device_adapter.helper import log_command
+from twister_ext.device.device_abstract import DeviceAbstract
+from twister_ext.twister_ext_config import DeviceConfig
+from twister_ext.exceptions import TwisterExtException
+from twister_ext.helper import log_command
 
 logger = logging.getLogger(__name__)
 
@@ -107,7 +107,7 @@ class HardwareAdapter(DeviceAbstract):
         """
         west = shutil.which('west')
         if west is None:
-            raise DeviceAdapterException('west not found')
+            raise TwisterExtException('west not found')
 
         command = [
             west,
@@ -150,7 +150,7 @@ class HardwareAdapter(DeviceAbstract):
         if not self.command:
             msg = 'Flash command is empty, please verify if it was generated properly.'
             logger.error(msg)
-            raise DeviceAdapterException(msg)
+            raise TwisterExtException(msg)
         logger.info('Flashing device')
         log_command(logger, 'Flashing command', self.command, level=logging.INFO)
         try:
@@ -160,7 +160,7 @@ class HardwareAdapter(DeviceAbstract):
             )
         except subprocess.CalledProcessError:
             logger.error('Error while flashing device')
-            raise DeviceAdapterException('Could not flash device')
+            raise TwisterExtException('Could not flash device')
         else:
             try:
                 stdout, stderr = process.communicate(timeout=self.device_config.flashing_timeout)
@@ -173,7 +173,7 @@ class HardwareAdapter(DeviceAbstract):
             if process.returncode == 0:
                 logger.info('Flashing finished')
             else:
-                raise DeviceAdapterException('Could not flash device')
+                raise TwisterExtException('Could not flash device')
 
     @property
     def iter_stdout(self) -> Generator[str, None, None]:

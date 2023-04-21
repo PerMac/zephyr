@@ -65,4 +65,4 @@ dmypy.json
 # VSCode
 .vscode/
 
-device_adapter_out
+twister_ext_out

@@ -15,4 +15,4 @@ cbor>=1.0.0
 psutil
 
 # pytest plugin
--e ${ZEPHYR_BASE}/scripts/pylib/pytest-device-adapter
+-e ${ZEPHYR_BASE}/scripts/pylib/pytest-twister-ext

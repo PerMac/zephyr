@@ -8,7 +8,7 @@ from pathlib import Path
 
 import yaml.parser
 
-from device_adapter.exceptions import DeviceAdapterException
+from twister_ext.exceptions import TwisterExtException
 
 _WINDOWS = (platform.system() == 'Windows')
 
@@ -42,7 +42,7 @@ def safe_load_yaml(filename: Path) -> dict:
             data = yaml.safe_load(file)
         except yaml.parser.ParserError as exc:
             logger.error('Parsing error for yaml file %s: %s', filename, exc)
-            raise DeviceAdapterException(f'Cannot load data from yaml file: {filename}')
+            raise TwisterExtException(f'Cannot load data from yaml file: {filename}')
         else:
             return data
 

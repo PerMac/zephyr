@@ -3,9 +3,9 @@ from typing import Generator, Type
 
 import pytest
 
-from device_adapter.device.device_abstract import DeviceAbstract
-from device_adapter.device.factory import DeviceFactory
-from device_adapter.device_adapter_config import DeviceAdapterConfig, DeviceConfig
+from twister_ext.device.device_abstract import DeviceAbstract
+from twister_ext.device.factory import DeviceFactory
+from twister_ext.twister_ext_config import TwisterExtConfig, DeviceConfig
 
 logger = logging.getLogger(__name__)
 
@@ -13,8 +13,8 @@ logger = logging.getLogger(__name__)
 @pytest.fixture(scope='function')
 def dut(request: pytest.FixtureRequest) -> Generator[DeviceAbstract, None, None]:
     """Return device instance."""
-    device_adapter_config: DeviceAdapterConfig = request.config.device_adapter_config  # type: ignore
-    device_config: DeviceConfig = device_adapter_config.devices[0]
+    twister_ext_config: TwisterExtConfig = request.config.twister_ext_config  # type: ignore
+    device_config: DeviceConfig = twister_ext_config.devices[0]
     device_type = device_config.type
 
     device_class: Type[DeviceAbstract] = DeviceFactory.get_device(device_type)
