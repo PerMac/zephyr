@@ -3,9 +3,9 @@ from __future__ import annotations
 import logging
 from typing import Type
 
-from device_adapter.device.device_abstract import DeviceAbstract
-from device_adapter.device.hardware_adapter import HardwareAdapter
-from device_adapter.exceptions import DeviceAdapterException
+from twister_ext.device.device_abstract import DeviceAbstract
+from twister_ext.device.hardware_adapter import HardwareAdapter
+from twister_ext.exceptions import TwisterExtException
 
 logger = logging.getLogger(__name__)
 
@@ -29,7 +29,7 @@ class DeviceFactory:
             return cls._devices[name]
         except KeyError as e:
             logger.error('There is no device with name "%s"', name)
-            raise DeviceAdapterException(f'There is no device with name "{name}"') from e
+            raise TwisterExtException(f'There is no device with name "{name}"') from e
 
 
 DeviceFactory.register_device_class('hardware', HardwareAdapter)

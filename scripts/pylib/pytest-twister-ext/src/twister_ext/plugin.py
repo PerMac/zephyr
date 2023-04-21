@@ -6,30 +6,30 @@ from pathlib import Path
 
 import pytest
 
-from device_adapter.device_adapter_config import DeviceAdapterConfig
-from device_adapter.log import configure_logging
+from twister_ext.twister_ext_config import TwisterExtConfig
+from twister_ext.log import configure_logging
 
 logger = logging.getLogger(__name__)
 
 pytest_plugins = (
-    'device_adapter.fixtures.dut'
+    'twister_ext.fixtures.dut'
 )
 
 
 def pytest_addoption(parser: pytest.Parser):
-    device_adapter_group = parser.getgroup('Device adapter')
-    device_adapter_group.addoption(
-        '--device-adapter',
+    twister_ext_group = parser.getgroup('Twister ext')
+    twister_ext_group.addoption(
+        '--twister-ext',
         action='store_true',
         default=False,
-        help='Activate Device adapter plugin'
+        help='Activate Twister ext plugin'
     )
     parser.addini(
-        'device_adapter',
-        'Activate Device adapter plugin',
+        'twister_ext',
+        'Activate Twister ext plugin',
         type='bool'
     )
-    device_adapter_group.addoption(
+    twister_ext_group.addoption(
         '-O',
         '--outdir',
         metavar='PATH',
@@ -37,63 +37,63 @@ def pytest_addoption(parser: pytest.Parser):
         help='Output directory for logs. If not provided then use '
              '--build-dir path as default.'
     )
-    device_adapter_group.addoption(
+    twister_ext_group.addoption(
         '--platform',
         help='Choose specific platform'
     )
-    device_adapter_group.addoption(
+    twister_ext_group.addoption(
         '--device-type',
         help='Choose type of device (hardware, qemu, etc.)'
     )
-    device_adapter_group.addoption(
+    twister_ext_group.addoption(
         '--device-serial',
         help='Serial device for accessing the board '
              '(e.g., /dev/ttyACM0)'
     )
-    device_adapter_group.addoption(
+    twister_ext_group.addoption(
         '--device-serial-baud',
         type=int,
         default=115200,
         help='Serial device baud rate (default 115200)'
     )
-    device_adapter_group.addoption(
+    twister_ext_group.addoption(
         '--runner',
         help='use the specified west runner (pyocd, nrfjprog, etc)'
     )
-    device_adapter_group.addoption(
+    twister_ext_group.addoption(
         '--device-id',
         help='ID of connected hardware device (for example 000682459367)'
     )
-    device_adapter_group.addoption(
+    twister_ext_group.addoption(
         '--device-product',
         help='Product name of connected hardware device (for example "STM32 STLink")'
     )
-    device_adapter_group.addoption(
+    twister_ext_group.addoption(
         '--device-serial-pty',
         metavar='PATH',
         help='Script for controlling pseudoterminal. '
              'E.g --device-testing --device-serial-pty=<script>'
     )
-    device_adapter_group.addoption(
+    twister_ext_group.addoption(
         '--west-flash-extra-args',
         help='Extend parameters for west flash. '
              'E.g. --west-flash-extra-args="--board-id=foobar,--erase" '
              'will translate to "west flash -- --board-id=foobar --erase"'
     )
-    device_adapter_group.addoption(
+    twister_ext_group.addoption(
         '--flashing-timeout',
         type=int,
         default=60,
         help='Set timeout for the device flash operation in seconds.'
     )
-    device_adapter_group.addoption(
+    twister_ext_group.addoption(
         '--build-dir',
         '--cmdopt',
         dest='build_dir',
         metavar='PATH',
         help='Directory with built application.'
     )
-    device_adapter_group.addoption(
+    twister_ext_group.addoption(
         '--binary-file',
         metavar='PATH',
         help='Path to file which should be flashed.'
@@ -104,7 +104,7 @@ def pytest_configure(config: pytest.Config):
     if config.getoption('help'):
         return
 
-    if not (config.getoption('device_adapter') or config.getini('device_adapter')):
+    if not (config.getoption('twister_ext') or config.getini('twister_ext')):
         return
 
     validate_options(config)
@@ -118,7 +118,7 @@ def pytest_configure(config: pytest.Config):
 
     configure_logging(config)
 
-    config.device_adapter_config = DeviceAdapterConfig.create(config)  # type: ignore
+    config.twister_ext_config = TwisterExtConfig.create(config)  # type: ignore
 
 
 def validate_options(config: pytest.Config) -> None:

@@ -1,5 +1,5 @@
 ==============
-Device adapter
+Twister ext
 ==============
 
 Installation
@@ -28,7 +28,7 @@ Built shell application by west and call pytest directly:
 
   cd samples/subsys/shell/shell_module
   west build -p -b nrf52840dk_nrf52840
-  pytest --device-adapter --device-type=hardware --device-serial=/dev/ttyACM0 --build-dir=build
+  pytest --twister-ext --device-type=hardware --device-serial=/dev/ttyACM0 --build-dir=build
 
 Or run this test by Twister:
 

@@ -8,7 +8,7 @@ tests:
     harness_config:
       pytest_root: test_shell.py
       pytest_args:
-        - --device-adapter
+        - --twister-ext
         - --device-type=hardware
         - --device-serial=/dev/ttyACM0
     min_ram: 40

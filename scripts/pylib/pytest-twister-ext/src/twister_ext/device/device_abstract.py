@@ -5,7 +5,7 @@ import logging
 import os
 from typing import Generator
 
-from device_adapter.device_adapter_config import DeviceConfig
+from twister_ext.twister_ext_config import DeviceConfig
 
 logger = logging.getLogger(__name__)
 
