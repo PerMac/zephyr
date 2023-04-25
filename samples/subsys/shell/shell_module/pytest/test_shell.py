@@ -1,6 +1,9 @@
 import time
 import re
+import logging
 import pytest
+
+logger = logging.getLogger(__name__)
 
 
 def test_shell(dut):
@@ -13,6 +16,7 @@ def test_shell(dut):
     timeout = 5  # [sec]
     time_end = time.time() + timeout
     for line in dut.iter_stdout:
+        logger.info(f'DUT: {line}')
         if pattern.match(line):
             matched = True
             break
