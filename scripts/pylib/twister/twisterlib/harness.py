@@ -2,6 +2,7 @@
 from asyncio.log import logger
 import re
 import os
+import sys
 import subprocess
 import shlex
 from collections import OrderedDict
@@ -46,7 +47,6 @@ class Harness:
         self.recording = []
         self.fieldnames = []
         self.ztest = False
-        self.is_pytest = False
         self.detected_suite_names = []
         self.run_id = None
         self.matched_run_id = False
@@ -159,64 +159,105 @@ class Console(Harness):
         else:
             tc.status = "failed"
 
+
+class PytestHarnessException(Exception):
+    """General exception for pytest."""
+
+
 class Pytest(Harness):
+
     def configure(self, instance):
         super(Pytest, self).configure(instance)
         self.running_dir = instance.build_dir
         self.source_dir = instance.testsuite.source_dir
-        self.pytest_root = 'pytest'
-        self.pytest_args = []
-        self.is_pytest = True
-        config = instance.testsuite.harness_config
+        self.report_file = os.path.join(self.running_dir, 'report.xml')
+        self.reserved_serial = None
 
-        if config:
-            self.pytest_root = config.get('pytest_root', 'pytest')
-            self.pytest_args = config.get('pytest_args', [])
+    def pytest_run(self):
+        log_file = os.path.join(self.running_dir, 'pytest.log')
 
-    def handle(self, line):
-        ''' Test cases that make use of pytest more care about results given
-            by pytest tool which is called in pytest_run(), so works of this
-            handle is trying to give a PASS or FAIL to avoid timeout, nothing
-            is writen into handler.log
-        '''
-        self.state = "passed"
-        tc = self.instance.get_case_or_create(self.id)
-        tc.status = "passed"
+        try:
+            cmd = self.generate_command()
+            if not cmd:
+                logger.error('Pytest command not generated, check logs')
+                return
 
-    def pytest_run(self, log_file):
-        ''' To keep artifacts of pytest in self.running_dir, pass this directory
-            by "--cmdopt". On pytest end, add a command line option and provide
-            the cmdopt through a fixture function
-            If pytest harness report failure, twister will direct user to see
-            handler.log, this method writes test result in handler.log
-        '''
-        cmd = [
-			'pytest',
-			'-s',
-			os.path.join(self.source_dir, self.pytest_root),
-			'--cmdopt',
-			self.running_dir,
-			'--junit-xml',
-			os.path.join(self.running_dir, 'report.xml'),
-			'-q'
+            with open(log_file, 'a') as log:
+                self.run_command(cmd, log)
+
+        except PytestHarnessException as pytest_exception:
+            logger.error(str(pytest_exception))
+        finally:
+            if self.reserved_serial:
+                self.instance.handler.make_device_available(self.reserved_serial)
+
+    def generate_command(self):
+        config = self.instance.testsuite.harness_config
+        pytest_root = config.get('pytest_root', 'pytest') if config else 'pytest'
+        pytest_args = config.get('pytest_args', []) if config else []
+        command = [
+            'pytest',
+            '--twister-ext',
+            '-s',
+            '-q',
+            os.path.join(self.source_dir, pytest_root),
+            f'--build-dir={self.running_dir}',
+            f'--junit-xml={self.report_file}'
         ]
+        command.extend(pytest_args)
 
-        for arg in self.pytest_args:
-            cmd.append(arg)
+        handler = self.instance.handler
+        if handler.type_str == 'device':
+            command.extend(
+                self._generate_parameters_for_hardware(handler)
+            )
+        return command
 
-        log = open(log_file, "a")
+    def _generate_parameters_for_hardware(self, handler):
+        command = ['--device-type=hardware']
+        hardware = handler.get_hardware()
+        if not hardware:
+            raise PytestHarnessException('Hardware is not available')
+
+        self.reserved_serial = hardware.serial_pty or hardware.serial
+        if hardware.serial_pty:
+            command.append(f'--device-serial-pty={hardware.serial_pty}')
+        else:
+            command.extend([
+                f'--device-serial={hardware.serial}',
+                f'--device-serial-baud={hardware.baud}'
+            ])
+
+        options = handler.options
+        if runner := hardware.runner or options.west_runner:
+            command.append(f'--runner={runner}')
+
+        if options.west_flash and options.west_flash != []:
+            command.append(f'--west-flash-extra-args={options.west_flash}')
+
+        if board_id := hardware.probe_id or hardware.id:
+            command.append(f'--device-id={board_id}')
+
+        if hardware.product:
+            command.append(f'--device-product={hardware.product}')
+
+        # TODO:
+        # pre_script = hardware.pre_script
+        # post_flash_script = hardware.post_flash_script
+        # post_script = hardware.post_script
+        return command
+
+    def run_command(self, cmd, log):
         outs = []
         errs = []
-
-        logger.debug(
-                "Running pytest command: %s",
-                " ".join(shlex.quote(a) for a in cmd))
+        logger.debug("Running pytest command: %s",
+                     " ".join(shlex.quote(a) for a in cmd))
         with subprocess.Popen(cmd,
-                              stdout = subprocess.PIPE,
-                              stderr = subprocess.PIPE) as proc:
+                              stdout=subprocess.PIPE,
+                              stderr=subprocess.PIPE) as proc:
             try:
                 outs, errs = proc.communicate()
-                tree = ET.parse(os.path.join(self.running_dir, "report.xml"))
+                tree = ET.parse(self.report_file)
                 root = tree.getroot()
                 for child in root:
                     if child.tag == 'testsuite':
@@ -236,6 +277,9 @@ class Pytest(Harness):
             except IOError:
                 log.write("Can't access report.xml\n")
                 self.state = "failed"
+
+        # TODO: get execution time
+        self.instance.execution_time = 1.0
 
         tc = self.instance.get_case_or_create(self.id)
         if self.state == "passed":
@@ -391,5 +435,18 @@ class Test(Harness):
             else:
                 tc.status = "failed"
 
+
 class Ztest(Test):
     pass
+
+
+class HarnessImporter:
+
+    @staticmethod
+    def get_harness(harness_name):
+        thismodule = sys.modules[__name__]
+        if harness_name:
+            harness_class = getattr(thismodule, harness_name)
+        else:
+            harness_class = getattr(thismodule, 'Test')
+        return harness_class()

@@ -88,7 +88,6 @@ def pytest_addoption(parser: pytest.Parser):
     )
     twister_ext_group.addoption(
         '--build-dir',
-        '--cmdopt',
         dest='build_dir',
         metavar='PATH',
         help='Directory with built application.'
