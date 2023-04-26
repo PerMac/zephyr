@@ -174,22 +174,18 @@ class Pytest(Harness):
         self.reserved_serial = None
 
     def pytest_run(self):
-        log_file = os.path.join(self.running_dir, 'pytest.log')
-
         try:
             cmd = self.generate_command()
             if not cmd:
                 logger.error('Pytest command not generated, check logs')
                 return
-
-            with open(log_file, 'a') as log:
-                self.run_command(cmd, log)
-
+            self.run_command(cmd)
         except PytestHarnessException as pytest_exception:
             logger.error(str(pytest_exception))
         finally:
             if self.reserved_serial:
                 self.instance.handler.make_device_available(self.reserved_serial)
+        self._apply_instance_status()
 
     def generate_command(self):
         config = self.instance.testsuite.harness_config
@@ -247,16 +243,13 @@ class Pytest(Harness):
         # post_script = hardware.post_script
         return command
 
-    def run_command(self, cmd, log):
-        outs = []
-        errs = []
-        logger.debug("Running pytest command: %s",
-                     " ".join(shlex.quote(a) for a in cmd))
+    def run_command(self, cmd):
+        logger.debug('Running pytest command: %s', ' '.join(shlex.quote(a) for a in cmd))
         with subprocess.Popen(cmd,
                               stdout=subprocess.PIPE,
-                              stderr=subprocess.PIPE) as proc:
+                              stderr=subprocess.STDOUT) as proc:
             try:
-                outs, errs = proc.communicate()
+                proc.communicate()
                 tree = ET.parse(self.report_file)
                 root = tree.getroot()
                 for child in root:
@@ -266,37 +259,40 @@ class Pytest(Harness):
                         elif child.attrib['skipped'] != '0':
                             self.state = "skipped"
                         elif child.attrib['errors'] != '0':
-                            self.state = "errors"
+                            self.state = "error"
                         else:
                             self.state = "passed"
+                        self.instance.execution_time = child.attrib['time']
             except subprocess.TimeoutExpired:
                 proc.kill()
                 self.state = "failed"
             except ET.ParseError:
                 self.state = "failed"
             except IOError:
-                log.write("Can't access report.xml\n")
+                logger.warning("Can't access report.xml")
                 self.state = "failed"
-
-        # TODO: get execution time
-        self.instance.execution_time = 1.0
 
         tc = self.instance.get_case_or_create(self.id)
         if self.state == "passed":
             tc.status = "passed"
-            log.write("Pytest cases passed\n")
+            logger.debug("Pytest cases passed")
         elif self.state == "skipped":
             tc.status = "skipped"
-            log.write("Pytest cases skipped\n")
-            log.write("Please refer report.xml for detail")
+            logger.debug("Pytest cases skipped.")
         else:
             tc.status = "failed"
-            log.write("Pytest cases failed\n")
+            logger.info("Pytest cases failed.")
 
-        log.write("\nOutput from pytest:\n")
-        log.write(outs.decode('UTF-8'))
-        log.write(errs.decode('UTF-8'))
-        log.close()
+    def _apply_instance_status(self):
+        if self.state:
+            self.instance.status = self.state
+            if self.state in ["error", "failed"]:
+                self.instance.reason = "Pytest failed"
+        else:
+            self.instance.status = "failed"
+            self.instance.reason = "Pytest timeout"
+        if self.instance.status in ["error", "failed"]:
+            self.instance.add_missing_case_status("blocked", self.instance.reason)
 
 
 class Test(Harness):

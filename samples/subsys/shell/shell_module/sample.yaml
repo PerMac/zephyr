@@ -5,11 +5,9 @@ tests:
     filter: CONFIG_SERIAL and dt_chosen_enabled("zephyr,shell-uart")
     tags: shell
     harness: pytest
-    # harness_config:
-    #   pytest_args:
-    #     - --twister-ext
-    #     - --device-type=hardware
-    #     - --device-serial=/dev/ttyACM0
+    harness_config:
+      pytest_args:
+        - --log-level=DEBUG
     min_ram: 40
     integration_platforms:
       - native_posix

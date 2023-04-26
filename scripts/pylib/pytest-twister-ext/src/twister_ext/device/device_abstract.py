@@ -5,6 +5,7 @@ import logging
 import os
 from typing import Generator
 
+from twister_ext.log_files.log_file import LogFile, NullLogFile
 from twister_ext.twister_ext_config import DeviceConfig
 
 logger = logging.getLogger(__name__)
@@ -18,6 +19,8 @@ class DeviceAbstract(abc.ABC):
         :param device_config: device configuration
         """
         self.device_config: DeviceConfig = device_config
+        self.handler_log_file: LogFile = NullLogFile.create()
+        self.device_log_file: LogFile = NullLogFile.create()
 
     def __repr__(self) -> str:
         return f'{self.__class__.__name__}()'
@@ -54,6 +57,12 @@ class DeviceAbstract(abc.ABC):
     @abc.abstractmethod
     def iter_stdout(self) -> Generator[str, None, None]:
         """Iterate stdout from a device."""
+
+    @abc.abstractmethod
+    def initialize_log_files(self):
+        """
+        Initialize file to store logs.
+        """
 
     def stop(self) -> None:
         """Stop device."""
