@@ -24,6 +24,7 @@ def dut(request: pytest.FixtureRequest) -> Generator[DeviceAbstract, None, None]
     try:
         device.connect()
         device.generate_command()
+        device.initialize_log_files()
         device.flash_and_run()
         device.connect()
         yield device

@@ -17,6 +17,7 @@ from twister_ext.device.device_abstract import DeviceAbstract
 from twister_ext.twister_ext_config import DeviceConfig
 from twister_ext.exceptions import TwisterExtException
 from twister_ext.helper import log_command
+from twister_ext.log_files.log_file import DeviceLogFile, HandlerLogFile
 
 logger = logging.getLogger(__name__)
 
@@ -151,7 +152,8 @@ class HardwareAdapter(DeviceAbstract):
             msg = 'Flash command is empty, please verify if it was generated properly.'
             logger.error(msg)
             raise TwisterExtException(msg)
-        logger.info('Flashing device')
+        if self.device_config.id:
+            logger.info('Flashing device %s', self.device_config.id)
         log_command(logger, 'Flashing command', self.command, level=logging.INFO)
         try:
             process = subprocess.Popen(
@@ -166,14 +168,16 @@ class HardwareAdapter(DeviceAbstract):
                 stdout, stderr = process.communicate(timeout=self.device_config.flashing_timeout)
             except subprocess.TimeoutExpired:
                 process.kill()
-            else:
-                for line in stdout.decode('utf-8').split('\n'):
-                    if line:
-                        logger.info(line)
+            finally:
+                if stdout:
+                    self.device_log_file.handle(data=stdout)
+                    logger.debug(stdout.decode(errors='ignore'))
+                if stderr:
+                    self.device_log_file.handle(data=stderr)
             if process.returncode == 0:
                 logger.info('Flashing finished')
             else:
-                raise TwisterExtException('Could not flash device')
+                raise TwisterExtException(f'Could not flash device {self.device_config.id}')
 
     @property
     def iter_stdout(self) -> Generator[str, None, None]:
@@ -181,6 +185,12 @@ class HardwareAdapter(DeviceAbstract):
         if not self.connection:
             return
         self.connection.flush()
+        self.connection.reset_input_buffer()
         while self.connection and self.connection.is_open:
             stream = self.connection.readline()
-            yield stream.decode('UTF-8').strip()
+            self.handler_log_file.handle(data=stream)
+            yield stream.decode(errors='ignore').strip()
+
+    def initialize_log_files(self) -> None:
+        self.handler_log_file = HandlerLogFile.create(build_dir=self.device_config.build_dir)
+        self.device_log_file = DeviceLogFile.create(build_dir=self.device_config.build_dir)

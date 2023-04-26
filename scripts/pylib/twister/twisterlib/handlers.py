@@ -175,6 +175,7 @@ class BinaryHandler(Handler):
     def _output_reader(self, proc):
         self.line = proc.stdout.readline()
 
+    def _output_handler(self, proc, harness):
         with open(self.log, "wt") as log_out_fp:
             timeout_extended = False
             timeout_time = time.time() + self.timeout
