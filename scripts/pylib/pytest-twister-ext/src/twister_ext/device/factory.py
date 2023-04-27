@@ -5,6 +5,7 @@ from typing import Type
 
 from twister_ext.device.device_abstract import DeviceAbstract
 from twister_ext.device.hardware_adapter import HardwareAdapter
+from twister_ext.device.qemu_adapter import QemuAdapter
 from twister_ext.exceptions import TwisterExtException
 
 logger = logging.getLogger(__name__)
@@ -33,3 +34,4 @@ class DeviceFactory:
 
 
 DeviceFactory.register_device_class('hardware', HardwareAdapter)
+DeviceFactory.register_device_class('qemu', QemuAdapter)

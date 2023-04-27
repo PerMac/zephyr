@@ -21,8 +21,8 @@ class DeviceConfig:
     serial_pty: str = ''
     west_flash_extra_args: list[str] = field(default_factory=list, repr=False)
     flashing_timeout: int = 60  # [s]
-    build_dir: Path | None = None
-    binary_file: Path | None = None
+    build_dir: Path | str = ''
+    binary_file: Path | str = ''
     name: str = ''
 
 
