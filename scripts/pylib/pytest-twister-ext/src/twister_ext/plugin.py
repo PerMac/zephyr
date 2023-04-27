@@ -43,6 +43,7 @@ def pytest_addoption(parser: pytest.Parser):
     )
     twister_ext_group.addoption(
         '--device-type',
+        choices=('native', 'qemu', 'hardware', 'unit', 'custom'),
         help='Choose type of device (hardware, qemu, etc.)'
     )
     twister_ext_group.addoption(

@@ -207,8 +207,16 @@ class Pytest(Harness):
             command.extend(
                 self._generate_parameters_for_hardware(handler)
             )
-        else:
+        elif any([
+            handler.type_str == 'qemu',
+            handler.type_str == 'native',
+            handler.type_str == 'unit',
+        ]):
             command.append(f'--device-type={handler.type_str}')
+        elif handler.type_str == 'build':
+            command.append('--device-type=custom')
+        else:
+            raise PytestHarnessException(f'Handling of handler {handler.type_str} not implemented yet')
         return command
 
     def _generate_parameters_for_hardware(self, handler):

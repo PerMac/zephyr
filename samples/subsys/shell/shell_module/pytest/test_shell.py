@@ -21,12 +21,12 @@ def wait_for_message(iter_stdout, message, timeout=60):
 def test_shell_print_help(dut: DeviceAbstract):
     time.sleep(1)  # wait for application initialization on DUT
 
-    dut.send(b'help\n')
+    dut.write(b'help\n')
     assert wait_for_message(dut.iter_stdout, "see all available commands")
 
 
 def test_shell_print_version(dut: DeviceAbstract):
     time.sleep(1)  # wait for application initialization on DUT
 
-    dut.send(b'version\n')
+    dut.write(b'version\n')
     assert wait_for_message(dut.iter_stdout, "Zephyr")
