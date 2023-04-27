@@ -187,7 +187,7 @@ class HardwareAdapter(DeviceAbstract):
             self.handler_log_file.handle(data=stream)
             yield stream.decode(errors='ignore').strip()
 
-    def send(self, data: bytes) -> None:
+    def write(self, data: bytes) -> None:
         """Write data to serial"""
         if self.connection:
             self.connection.write(data)

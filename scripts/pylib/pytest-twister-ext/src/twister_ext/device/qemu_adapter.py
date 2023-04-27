@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import logging
 import os
-import queue
 import shutil
 import signal
 import subprocess
@@ -33,7 +32,6 @@ class QemuAdapter(DeviceAbstract):
         super().__init__(device_config, **kwargs)
         self._process: subprocess.Popen | None = None
         self._process_ended_with_timeout: bool = False
-        self.queue: Queue = Queue()
         self._exc: Exception | None = None  #: store any exception which appeared running this thread
         self._thread: threading.Thread | None = None
         self._emulation_was_finished: bool = False
@@ -151,7 +149,7 @@ class QemuAdapter(DeviceAbstract):
         self._wait_for_fifo()
 
         # create unblocking reading from fifo file
-        q: queue.Queue = queue.Queue()
+        q: Queue = Queue()
 
         def read_lines():
             while self.connection and self.connection.is_open:
@@ -173,7 +171,7 @@ class QemuAdapter(DeviceAbstract):
                     stream = q.get(timeout=0.1)
                     self.handler_log_file.handle(data=stream + '\n')
                     yield stream
-                except queue.Empty:  # timeout appeared
+                except q.Empty:  # timeout appeared
                     pass
                 if time.time() > end_time:
                     break
@@ -183,7 +181,7 @@ class QemuAdapter(DeviceAbstract):
         finally:
             t.join(1)
 
-    def send(self, data: bytes) -> None:
+    def write(self, data: bytes) -> None:
         """Write data to serial"""
         if self.connection:
             self.connection.write(data)

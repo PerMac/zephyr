@@ -57,8 +57,8 @@ class DeviceAbstract(abc.ABC):
         """Iterate stdout from a device."""
 
     @abc.abstractmethod
-    def send(self, data: bytes) -> None:
-        """Send data to device"""
+    def write(self, data: bytes) -> None:
+        """Write data bytes to device"""
 
     @abc.abstractmethod
     def initialize_log_files(self):
@@ -68,3 +68,23 @@ class DeviceAbstract(abc.ABC):
 
     def stop(self) -> None:
         """Stop device."""
+
+    # @abc.abstractmethod
+    # def read(self, size=1) -> None:
+    #     """Read size bytes from device"""
+
+    # def read_until(self, expected, size=None):
+    #     """Read until an expected bytes sequence is found"""
+    #     lenterm = len(expected)
+    #     line = bytearray()
+    #     while True:
+    #         c = self.read(1)
+    #         if c:
+    #             line += c
+    #             if line[-lenterm:] == expected:
+    #                 break
+    #             if size is not None and len(line) >= size:
+    #                 break
+    #         else:
+    #             break
+    #     return bytes(line)
