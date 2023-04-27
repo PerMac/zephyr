@@ -10,6 +10,7 @@ import re
 import shutil
 import subprocess
 from typing import Generator
+from datetime import datetime
 
 import serial
 
@@ -100,12 +101,7 @@ class HardwareAdapter(DeviceAbstract):
             self.serial_pty_proc = None
 
     def generate_command(self) -> None:
-        """
-        Return command to flash.
-
-        :param build_dir: build directory
-        :return: command to flash
-        """
+        """Return command to flash."""
         west = shutil.which('west')
         if west is None:
             raise TwisterExtException('west not found')
@@ -191,6 +187,14 @@ class HardwareAdapter(DeviceAbstract):
             self.handler_log_file.handle(data=stream)
             yield stream.decode(errors='ignore').strip()
 
+    def send(self, data: bytes) -> None:
+        """Write data to serial"""
+        if self.connection:
+            self.connection.write(data)
+
     def initialize_log_files(self) -> None:
         self.handler_log_file = HandlerLogFile.create(build_dir=self.device_config.build_dir)
         self.device_log_file = DeviceLogFile.create(build_dir=self.device_config.build_dir)
+        start_msg = f'\n==== Logging started at {datetime.now()} ====\n'
+        self.handler_log_file.handle(start_msg)
+        self.device_log_file.handle(start_msg)

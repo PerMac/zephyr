@@ -42,8 +42,6 @@ class DeviceAbstract(abc.ABC):
     def generate_command(self) -> None:
         """
         Generate command which will be used during flashing or running device.
-
-        :param build_dir: path to directory with built application
         """
 
     def flash_and_run(self) -> None:
@@ -57,6 +55,10 @@ class DeviceAbstract(abc.ABC):
     @abc.abstractmethod
     def iter_stdout(self) -> Generator[str, None, None]:
         """Iterate stdout from a device."""
+
+    @abc.abstractmethod
+    def send(self, data: bytes) -> None:
+        """Send data to device"""
 
     @abc.abstractmethod
     def initialize_log_files(self):

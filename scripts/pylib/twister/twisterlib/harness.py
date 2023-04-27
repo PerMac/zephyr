@@ -207,6 +207,8 @@ class Pytest(Harness):
             command.extend(
                 self._generate_parameters_for_hardware(handler)
             )
+        else:
+            command.append(f'--device-type={handler.type_str}')
         return command
 
     def _generate_parameters_for_hardware(self, handler):
@@ -262,7 +264,7 @@ class Pytest(Harness):
                             self.state = "error"
                         else:
                             self.state = "passed"
-                        self.instance.execution_time = child.attrib['time']
+                        self.instance.execution_time = float(child.attrib['time'])
             except subprocess.TimeoutExpired:
                 proc.kill()
                 self.state = "failed"

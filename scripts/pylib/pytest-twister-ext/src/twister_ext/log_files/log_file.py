@@ -19,7 +19,7 @@ class LogFile:
         self.filename = filename
 
     @staticmethod
-    def get_log_filename(build_dir: Path | str | None, name: str) -> str:
+    def get_log_filename(build_dir: Path | str, name: str) -> str:
         """
         :param build_dir: path to building directory.
         :param name: name of the logging file.
@@ -41,7 +41,7 @@ class LogFile:
                 log_file.write(data)  # type: ignore[arg-type]
 
     @classmethod
-    def create(cls, build_dir: Path | str | None = None) -> LogFile:
+    def create(cls, build_dir: Path | str = '') -> LogFile:
         filename = cls.get_log_filename(build_dir=build_dir, name=cls.name)
         return cls(filename)
 
