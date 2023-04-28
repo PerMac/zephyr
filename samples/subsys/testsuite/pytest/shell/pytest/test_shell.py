@@ -1,6 +1,10 @@
+# Copyright (c) 2023 Nordic Semiconductor ASA
+#
+# SPDX-License-Identifier: Apache-2.0
+
 import time
 import logging
-import pytest
+import pytest  # noqa: F401
 
 from twister_ext.device.device_abstract import DeviceAbstract
 
@@ -28,5 +32,5 @@ def test_shell_print_help(dut: DeviceAbstract):
 def test_shell_print_version(dut: DeviceAbstract):
     time.sleep(1)  # wait for application initialization on DUT
 
-    dut.write(b'version\n')
-    assert wait_for_message(dut.iter_stdout, "Zephyr")
+    dut.write(b'kernel version\n')
+    assert wait_for_message(dut.iter_stdout, "Zephyr version")

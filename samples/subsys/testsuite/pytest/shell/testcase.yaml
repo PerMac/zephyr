@@ -1,0 +1,11 @@
+tests:
+  sample.pytest.shell:
+    filter: CONFIG_SERIAL and dt_chosen_enabled("zephyr,shell-uart")
+    min_ram: 40
+    tags: shell
+    harness: pytest
+    # harness_config:
+    #   pytest_args:
+    #     - --log-level=DEBUG
+    extra_configs:
+      - CONFIG_NATIVE_UART_0_ON_STDINOUT=y
