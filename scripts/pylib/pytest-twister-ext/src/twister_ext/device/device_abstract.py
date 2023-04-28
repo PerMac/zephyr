@@ -44,7 +44,7 @@ class DeviceAbstract(abc.ABC):
         Generate command which will be used during flashing or running device.
         """
 
-    def flash_and_run(self) -> None:
+    def flash_and_run(self, timeout: float = 60.0) -> None:
         """
         Flash and run application on a device.
 

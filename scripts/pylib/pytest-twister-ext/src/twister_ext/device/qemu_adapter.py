@@ -8,7 +8,7 @@ import subprocess
 import threading
 import time
 from pathlib import Path
-from queue import Queue
+from queue import Queue, Empty
 from typing import Generator
 from datetime import datetime
 
@@ -171,7 +171,7 @@ class QemuAdapter(DeviceAbstract):
                     stream = q.get(timeout=0.1)
                     self.handler_log_file.handle(data=stream + '\n')
                     yield stream
-                except q.Empty:  # timeout appeared
+                except Empty:  # timeout appeared
                     pass
                 if time.time() > end_time:
                     break

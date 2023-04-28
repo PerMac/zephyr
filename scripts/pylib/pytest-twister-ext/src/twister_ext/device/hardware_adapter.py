@@ -143,7 +143,7 @@ class HardwareAdapter(DeviceAbstract):
             command.extend(command_extra_args)
         self.command = command
 
-    def flash_and_run(self) -> None:
+    def flash_and_run(self, timeout: float = 60.0) -> None:
         if not self.command:
             msg = 'Flash command is empty, please verify if it was generated properly.'
             logger.error(msg)
