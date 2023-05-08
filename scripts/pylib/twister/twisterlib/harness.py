@@ -207,11 +207,7 @@ class Pytest(Harness):
             command.extend(
                 self._generate_parameters_for_hardware(handler)
             )
-        elif any([
-            handler.type_str == 'qemu',
-            handler.type_str == 'native',
-            handler.type_str == 'unit',
-        ]):
+        elif handler.type_str in ['qemu', 'native', 'unit']:
             command.append(f'--device-type={handler.type_str}')
         elif handler.type_str == 'build':
             command.append('--device-type=custom')
