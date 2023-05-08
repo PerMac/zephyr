@@ -1,5 +1,10 @@
+# Copyright (c) 2023 Nordic Semiconductor ASA
+#
+# SPDX-License-Identifier: Apache-2.0
+
 import os
 import subprocess
+from typing import Generator
 from unittest import mock
 from unittest.mock import patch
 
@@ -12,7 +17,7 @@ from twister_ext.twister_ext_config import DeviceConfig
 
 
 @pytest.fixture(name='device')
-def fixture_device_adapter(tmp_path) -> QemuAdapter:
+def fixture_device_adapter(tmp_path) -> Generator[QemuAdapter, None, None]:
     build_dir = tmp_path / 'build_dir'
     adapter = QemuAdapter(DeviceConfig(build_dir=build_dir))
     yield adapter

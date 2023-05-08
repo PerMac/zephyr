@@ -1,3 +1,7 @@
+# Copyright (c) 2023 Nordic Semiconductor ASA
+#
+# SPDX-License-Identifier: Apache-2.0
+
 from __future__ import annotations
 
 import logging
@@ -6,8 +10,8 @@ from pathlib import Path
 
 import pytest
 
-from twister_ext.twister_ext_config import TwisterExtConfig
 from twister_ext.log import configure_logging
+from twister_ext.twister_ext_config import TwisterExtConfig
 
 logger = logging.getLogger(__name__)
 

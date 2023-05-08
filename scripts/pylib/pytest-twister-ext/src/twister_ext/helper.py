@@ -1,3 +1,7 @@
+# Copyright (c) 2023 Nordic Semiconductor ASA
+#
+# SPDX-License-Identifier: Apache-2.0
+
 from __future__ import annotations
 
 import logging
@@ -10,7 +14,7 @@ import yaml.parser
 
 from twister_ext.exceptions import TwisterExtException
 
-_WINDOWS = (platform.system() == 'Windows')
+_WINDOWS = platform.system() == 'Windows'
 
 logger = logging.getLogger(__name__)
 
@@ -36,7 +40,7 @@ def safe_load_yaml(filename: Path) -> dict:
     :param filename: path to yaml file
     :return: data read from yaml file
     """
-    __tracebackhide__ = True
+    # __tracebackhide__ = True
     with filename.open(encoding='UTF-8') as file:
         try:
             data = yaml.safe_load(file)

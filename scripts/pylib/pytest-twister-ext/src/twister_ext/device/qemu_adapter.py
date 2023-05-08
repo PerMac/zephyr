@@ -1,3 +1,7 @@
+# Copyright (c) 2023 Nordic Semiconductor ASA
+#
+# SPDX-License-Identifier: Apache-2.0
+
 from __future__ import annotations
 
 import logging
@@ -7,10 +11,10 @@ import signal
 import subprocess
 import threading
 import time
-from pathlib import Path
-from queue import Queue, Empty
-from typing import Generator
 from datetime import datetime
+from pathlib import Path
+from queue import Empty, Queue
+from typing import Generator
 
 import psutil
 
@@ -77,7 +81,7 @@ class QemuAdapter(DeviceAbstract):
                 stderr=subprocess.STDOUT,
                 env=self.env
             )
-            stdout, stderr = self._process.communicate(timeout=timeout)
+            stdout, _ = self._process.communicate(timeout=timeout)
             return_code: int = self._process.returncode
         except subprocess.TimeoutExpired:
             logger.error('Running simulation finished after timeout: %s seconds', timeout)

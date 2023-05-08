@@ -38,7 +38,6 @@ coverage.xml
 .hypothesis/
 .pytest_cache/
 
-
 # Environments
 .env
 .venv
@@ -48,7 +47,6 @@ ENV/
 env.bak/
 venv.bak/
 
-
 # mypy
 .mypy_cache/
 .dmypy.json
@@ -57,12 +55,8 @@ dmypy.json
 # Pyre type checker
 .pyre/
 
-*.log
-*.xml
-
 # Pycharm
 .idea/
+
 # VSCode
 .vscode/
-
-twister_ext_out
