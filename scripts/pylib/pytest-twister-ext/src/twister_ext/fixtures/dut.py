@@ -1,3 +1,7 @@
+# Copyright (c) 2023 Nordic Semiconductor ASA
+#
+# SPDX-License-Identifier: Apache-2.0
+
 import logging
 from typing import Generator, Type
 
@@ -5,7 +9,7 @@ import pytest
 
 from twister_ext.device.device_abstract import DeviceAbstract
 from twister_ext.device.factory import DeviceFactory
-from twister_ext.twister_ext_config import TwisterExtConfig, DeviceConfig
+from twister_ext.twister_ext_config import DeviceConfig, TwisterExtConfig
 
 logger = logging.getLogger(__name__)
 

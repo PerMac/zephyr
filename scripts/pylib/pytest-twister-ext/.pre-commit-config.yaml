@@ -4,21 +4,21 @@ repos:
     hooks:
       - id: flake8
         files: ^(src/|tests/)
-        stages: [ commit ]
+        stages: [commit]
 
   - repo: https://github.com/PyCQA/isort
     rev: 5.12.0
     hooks:
       - id: isort
         files: ^(src/|tests/)
-        stages: [ commit ]
+        stages: [commit]
         args: [
-         "--multi-line=3",
-         "--trailing-comma",
-         "--force-grid-wrap=0",
-         "--use-parentheses",
-         "--line-width=88"
-         ]
+          "--multi-line=3",
+          "--trailing-comma",
+          "--force-grid-wrap=0",
+          "--use-parentheses",
+          "--line-width=88"
+        ]
 
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v4.4.0

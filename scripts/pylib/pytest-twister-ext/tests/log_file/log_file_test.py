@@ -1,3 +1,7 @@
+# Copyright (c) 2023 Nordic Semiconductor ASA
+#
+# SPDX-License-Identifier: Apache-2.0
+
 import logging
 import os
 
@@ -15,7 +19,7 @@ def sample_log_file(tmpdir):
 
 
 def test_if_filename_is_correct(sample_log_file: LogFile):
-    assert sample_log_file.filename.endswith('uninitialized.log')
+    assert sample_log_file.filename.endswith('uninitialized.log')  # type: ignore[union-attr]
 
 
 def test_handle_data_is_str(sample_log_file: LogFile):
@@ -34,8 +38,8 @@ def test_handle_data_is_byte(sample_log_file: LogFile):
         assert file.readline() == 'bytes message'
 
 
-def test_handle_data_is_none(sample_log_file: LogFile):
-    msg = None
+def test_handle_data_is_empty(sample_log_file: LogFile):
+    msg = ''
     sample_log_file.handle(data=msg)
     assert not os.path.exists(path=sample_log_file.filename)
 

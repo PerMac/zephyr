@@ -1,3 +1,7 @@
+# Copyright (c) 2023 Nordic Semiconductor ASA
+#
+# SPDX-License-Identifier: Apache-2.0
+
 import os
 from pathlib import Path
 from unittest import mock
@@ -5,9 +9,9 @@ from unittest import mock
 import pytest
 
 from twister_ext.device.hardware_adapter import HardwareAdapter
-from twister_ext.twister_ext_config import DeviceConfig
 from twister_ext.exceptions import TwisterExtException
 from twister_ext.log_files.log_file import DeviceLogFile, HandlerLogFile
+from twister_ext.twister_ext_config import DeviceConfig
 
 
 @pytest.fixture(name='device')
@@ -174,7 +178,7 @@ def test_if_hardware_adapter_uses_serial_pty(
     patched_serial.return_value = serial_mock
 
     device.connect()
-    assert device.connection.port == '/pty/ttytest/456'
+    assert device.connection.port == '/pty/ttytest/456'  # type: ignore[union-attr]
     assert device.serial_pty_proc
     patched_popen.assert_called_with(
         ['script.py'],

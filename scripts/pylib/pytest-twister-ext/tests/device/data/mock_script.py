@@ -1,4 +1,8 @@
 #!/usr/bin/python
+# Copyright (c) 2023 Nordic Semiconductor ASA
+#
+# SPDX-License-Identifier: Apache-2.0
+
 """
 Simply mock for bash script to use with unit tests.
 """

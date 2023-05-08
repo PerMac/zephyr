@@ -1,6 +1,10 @@
+# Copyright (c) 2023 Nordic Semiconductor ASA
+#
+# SPDX-License-Identifier: Apache-2.0
+
 import os
-from pathlib import Path
 import subprocess
+from pathlib import Path
 from unittest import mock
 
 import pytest

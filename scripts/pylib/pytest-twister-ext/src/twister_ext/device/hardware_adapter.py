@@ -1,6 +1,7 @@
-"""
-This module implements adapter class for real device (DK board).
-"""
+# Copyright (c) 2023 Nordic Semiconductor ASA
+#
+# SPDX-License-Identifier: Apache-2.0
+
 from __future__ import annotations
 
 import logging
@@ -9,16 +10,16 @@ import pty
 import re
 import shutil
 import subprocess
-from typing import Generator
 from datetime import datetime
+from typing import Generator
 
 import serial
 
 from twister_ext.device.device_abstract import DeviceAbstract
-from twister_ext.twister_ext_config import DeviceConfig
 from twister_ext.exceptions import TwisterExtException
 from twister_ext.helper import log_command
 from twister_ext.log_files.log_file import DeviceLogFile, HandlerLogFile
+from twister_ext.twister_ext_config import DeviceConfig
 
 logger = logging.getLogger(__name__)
 
@@ -160,6 +161,7 @@ class HardwareAdapter(DeviceAbstract):
             logger.error('Error while flashing device')
             raise TwisterExtException('Could not flash device')
         else:
+            stdout = stderr = None
             try:
                 stdout, stderr = process.communicate(timeout=self.device_config.flashing_timeout)
             except subprocess.TimeoutExpired:

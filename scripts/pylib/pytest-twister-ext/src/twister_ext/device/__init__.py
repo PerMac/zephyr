@@ -1,1 +1,3 @@
-END_OF_DATA = object()  #: used for indicating that there will be no more data in queue
+# Copyright (c) 2023 Nordic Semiconductor ASA
+#
+# SPDX-License-Identifier: Apache-2.0

@@ -4,7 +4,7 @@
 
 import time
 import logging
-import pytest  # noqa: F401
+import pytest  # noqa # pylint: disable=unused-import
 
 from twister_ext.device.device_abstract import DeviceAbstract
 
