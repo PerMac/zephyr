@@ -33,7 +33,8 @@ def configure_logging(config: pytest.Config) -> None:
                 'format': log_format,
             },
             'simply': {
-                'format': '%(message)s'
+                'format': '%(asctime)s.%(msecs)d:%(levelname)s: %(message)s',
+                'datefmt': '%H:%M:%S'
             }
         },
         'handlers': {
@@ -49,7 +50,7 @@ def configure_logging(config: pytest.Config) -> None:
             'console': {
                 'class': 'logging.StreamHandler',
                 'level': 'DEBUG',
-                'formatter': 'standard',
+                'formatter': 'simply',
                 'filters': [],
             }
         },

@@ -203,6 +203,10 @@ class Pytest(Harness):
         command.extend(pytest_args)
 
         handler = self.instance.handler
+
+        if handler.options.verbose > 1:
+            command.append('--log-level=DEBUG')
+
         if handler.type_str == 'device':
             command.extend(
                 self._generate_parameters_for_hardware(handler)
@@ -255,6 +259,11 @@ class Pytest(Harness):
                               stdout=subprocess.PIPE,
                               stderr=subprocess.STDOUT) as proc:
             try:
+                while proc.stdout.readable() and proc.poll() is None:
+                    line = proc.stdout.readline().decode().strip()
+                    if not line:
+                        continue
+                    logger.debug("PYTEST: %s", line)
                 proc.communicate()
                 tree = ET.parse(self.report_file)
                 root = tree.getroot()
