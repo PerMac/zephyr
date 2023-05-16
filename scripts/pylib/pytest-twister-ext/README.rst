@@ -5,6 +5,10 @@ Twister ext
 Installation
 ------------
 
+If you plan to use this plugin with Twister, then you don't need to install it
+separately by pip. If for some reasons you prefer to work with installed package
+then you can do this in following way:
+
 Installation from the source:
 
 .. code-block:: sh
@@ -12,7 +16,7 @@ Installation from the source:
   pip install .
 
 
-Installation the project in editable mode:
+Installation of the project in editable mode:
 
 .. code-block:: sh
 
@@ -22,7 +26,21 @@ Installation the project in editable mode:
 Usage
 -----
 
-Build shell application by west and call pytest directly:
+Run exemplary test shell application by Twister (it doesn't require installed
+plugin by pip):
+
+.. code-block:: sh
+
+  cd ${ZEPHYR_BASE}
+
+  # native_posix & QEMU
+  ./scripts/twister -p native_posix -p qemu_x86 -T samples/subsys/testsuite/pytest/shell
+
+  # hardware
+  ./scripts/twister -p nrf52840dk_nrf52840 --device-testing --device-serial /dev/ttyACM0 -T samples/subsys/testsuite/pytest/shell
+
+or build shell application by west and call pytest directly (it requires
+installed plugin by pip):
 
 .. code-block:: sh
 
@@ -39,15 +57,3 @@ Build shell application by west and call pytest directly:
   # hardware
   west build -p -b nrf52840dk_nrf52840
   pytest --twister-ext --device-type=hardware --device-serial=/dev/ttyACM0 --build-dir=build
-
-Or run this test by Twister:
-
-.. code-block:: sh
-
-  cd ${ZEPHYR_BASE}
-
-  # native_posix & QEMU
-  ./scripts/twister -p native_posix -p qemu_x86 -T samples/subsys/testsuite/pytest/shell
-
-  # hardware
-  ./scripts/twister -p nrf52840dk_nrf52840 --device-testing --device-serial /dev/ttyACM0 -T samples/subsys/testsuite/pytest/shell

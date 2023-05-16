@@ -1,5 +1,7 @@
 # SPDX-License-Identifier: Apache-2.0
 from asyncio.log import logger
+import pkg_resources
+import platform
 import re
 import os
 import sys
@@ -9,8 +11,16 @@ from collections import OrderedDict
 import xml.etree.ElementTree as ET
 import logging
 
+from twisterlib.environment import ZEPHYR_BASE
+
+
 logger = logging.getLogger('twister')
 logger.setLevel(logging.DEBUG)
+
+_WINDOWS = platform.system() == 'Windows'
+installed_packages = [pkg.project_name for pkg in pkg_resources.working_set]  # pylint: disable=not-an-iterable
+_TWISTER_EXT_INSTALLED = 'pytest-twister-ext' in installed_packages
+
 
 # pylint: disable=anomalous-backslash-in-string
 result_re = re.compile(".*(PASS|FAIL|SKIP) - (test_)?(.*) in (\d*[.,]?\d*) seconds")
@@ -254,10 +264,12 @@ class Pytest(Harness):
         return command
 
     def run_command(self, cmd):
-        logger.debug('Running pytest command: %s', ' '.join(shlex.quote(a) for a in cmd))
+        cmd, env = self._update_command_with_env_dependencies(cmd)
+
         with subprocess.Popen(cmd,
                               stdout=subprocess.PIPE,
-                              stderr=subprocess.STDOUT) as proc:
+                              stderr=subprocess.STDOUT,
+                              env=env) as proc:
             try:
                 while proc.stdout.readable() and proc.poll() is None:
                     line = proc.stdout.readline().decode().strip()
@@ -297,6 +309,30 @@ class Pytest(Harness):
         else:
             tc.status = "failed"
             logger.info("Pytest cases failed.")
+
+    @staticmethod
+    def _update_command_with_env_dependencies(cmd):
+        '''
+        If python plugin wasn't installed by pip, then try to indicate it to
+        pytest by update PYTHONPATH and append -p argument to pytest command.
+        '''
+        env = os.environ.copy()
+        if not _TWISTER_EXT_INSTALLED:
+            cmd.extend(['-p', 'twister_ext.plugin'])
+            pytest_plugin_path = os.path.join(ZEPHYR_BASE, 'scripts', 'pylib', 'pytest-twister-ext', 'src')
+            env['PYTHONPATH'] = pytest_plugin_path + os.pathsep + env.get('PYTHONPATH', '')
+            if _WINDOWS:
+                cmd_append_python_path = f'set PYTHONPATH={pytest_plugin_path};%PYTHONPATH% && '
+            else:
+                cmd_append_python_path = f'export PYTHONPATH={pytest_plugin_path}:${{PYTHONPATH}} && '
+        else:
+            cmd_append_python_path = ''
+            logger.debug('You work with installed version of pytest-twister-ext '
+                         'plugin - make sure that you work with proper version')
+        cmd_to_print = cmd_append_python_path + shlex.join(cmd)
+        logger.debug('Running pytest command: %s', cmd_to_print)
+
+        return cmd, env
 
     def _apply_instance_status(self):
         if self.state:
