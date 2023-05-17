@@ -21,6 +21,8 @@ _WINDOWS = platform.system() == 'Windows'
 installed_packages = [pkg.project_name for pkg in pkg_resources.working_set]  # pylint: disable=not-an-iterable
 _TWISTER_EXT_INSTALLED = 'pytest-twister-ext' in installed_packages
 
+SUPPORTED_SIMS_IN_PYTEST = ['native', 'qemu']
+
 
 # pylint: disable=anomalous-backslash-in-string
 result_re = re.compile(".*(PASS|FAIL|SKIP) - (test_)?(.*) in (\d*[.,]?\d*) seconds")
@@ -221,7 +223,7 @@ class Pytest(Harness):
             command.extend(
                 self._generate_parameters_for_hardware(handler)
             )
-        elif handler.type_str in ['qemu', 'native', 'unit']:
+        elif handler.type_str in SUPPORTED_SIMS_IN_PYTEST:
             command.append(f'--device-type={handler.type_str}')
         elif handler.type_str == 'build':
             command.append('--device-type=custom')
