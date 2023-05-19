@@ -14,11 +14,11 @@ def configure_logging(config: pytest.Config) -> None:
     """Configure logging."""
     output_dir = config.option.output_dir
     os.makedirs(output_dir, exist_ok=True)
-    log_file = os.path.join(output_dir, 'twister_ext.log')
+    log_file = os.path.join(output_dir, 'twister_harness.log')
 
     if hasattr(config, 'workerinput'):
         worker_id = config.workerinput['workerid']
-        log_file = os.path.join(output_dir, f'twister_ext_{worker_id}.log')
+        log_file = os.path.join(output_dir, f'twister_harness_{worker_id}.log')
 
     log_format = '%(asctime)s:%(levelname)s:%(name)s: %(message)s'
     log_level = config.getoption('--log-level') or config.getini('log_level') or logging.INFO
@@ -60,7 +60,7 @@ def configure_logging(config: pytest.Config) -> None:
                 'level': 'WARNING',
                 'propagate': False
             },
-            'twister_ext': {
+            'twister_harness': {
                 'handlers': ['console', 'file'],
                 'level': log_level,
                 'propagate': False,

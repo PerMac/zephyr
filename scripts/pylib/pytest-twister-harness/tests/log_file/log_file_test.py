@@ -7,7 +7,7 @@ import os
 
 import pytest
 
-from twister_ext.log_files.log_file import LogFile
+from twister_harness.log_files.log_file import LogFile
 
 logger = logging.getLogger(__name__)
 

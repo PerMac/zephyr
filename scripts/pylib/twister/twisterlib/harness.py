@@ -19,7 +19,7 @@ logger.setLevel(logging.DEBUG)
 
 _WINDOWS = platform.system() == 'Windows'
 installed_packages = [pkg.project_name for pkg in pkg_resources.working_set]  # pylint: disable=not-an-iterable
-_TWISTER_EXT_INSTALLED = 'pytest-twister-ext' in installed_packages
+_PYTEST_PLUGIN_INSTALLED = 'pytest-twister-harness' in installed_packages
 
 SUPPORTED_SIMS_IN_PYTEST = ['native', 'qemu']
 
@@ -205,7 +205,7 @@ class Pytest(Harness):
         pytest_args = config.get('pytest_args', []) if config else []
         command = [
             'pytest',
-            '--twister-ext',
+            '--twister-harness',
             '-s',
             '-q',
             os.path.join(self.source_dir, pytest_root),
@@ -319,9 +319,9 @@ class Pytest(Harness):
         pytest by update PYTHONPATH and append -p argument to pytest command.
         '''
         env = os.environ.copy()
-        if not _TWISTER_EXT_INSTALLED:
-            cmd.extend(['-p', 'twister_ext.plugin'])
-            pytest_plugin_path = os.path.join(ZEPHYR_BASE, 'scripts', 'pylib', 'pytest-twister-ext', 'src')
+        if not _PYTEST_PLUGIN_INSTALLED:
+            cmd.extend(['-p', 'twister_harness.plugin'])
+            pytest_plugin_path = os.path.join(ZEPHYR_BASE, 'scripts', 'pylib', 'pytest-twister-harness', 'src')
             env['PYTHONPATH'] = pytest_plugin_path + os.pathsep + env.get('PYTHONPATH', '')
             if _WINDOWS:
                 cmd_append_python_path = f'set PYTHONPATH={pytest_plugin_path};%PYTHONPATH% && '
@@ -329,7 +329,7 @@ class Pytest(Harness):
                 cmd_append_python_path = f'export PYTHONPATH={pytest_plugin_path}:${{PYTHONPATH}} && '
         else:
             cmd_append_python_path = ''
-            logger.debug('You work with installed version of pytest-twister-ext '
+            logger.debug('You work with installed version of pytest-twister-harness '
                          'plugin - make sure that you work with proper version')
         cmd_to_print = cmd_append_python_path + shlex.join(cmd)
         logger.debug('Running pytest command: %s', cmd_to_print)

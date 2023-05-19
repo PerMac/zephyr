@@ -31,13 +31,13 @@ class DeviceConfig:
 
 
 @dataclass
-class TwisterExtConfig:
-    """Store Twister ext configuration to have easy access in test."""
-    output_dir: Path = Path('twister_ext_out')
+class TwisterHarnessConfig:
+    """Store Twister harness configuration to have easy access in test."""
+    output_dir: Path = Path('twister_harness_out')
     devices: list[DeviceConfig] = field(default_factory=list, repr=False)
 
     @classmethod
-    def create(cls, config: pytest.Config) -> TwisterExtConfig:
+    def create(cls, config: pytest.Config) -> TwisterHarnessConfig:
         """Create new instance from pytest.Config."""
         output_dir: Path = config.option.output_dir
 
