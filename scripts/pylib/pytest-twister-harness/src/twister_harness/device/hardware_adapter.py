@@ -15,11 +15,11 @@ from typing import Generator
 
 import serial
 
-from twister_ext.device.device_abstract import DeviceAbstract
-from twister_ext.exceptions import TwisterExtException
-from twister_ext.helper import log_command
-from twister_ext.log_files.log_file import DeviceLogFile, HandlerLogFile
-from twister_ext.twister_ext_config import DeviceConfig
+from twister_harness.device.device_abstract import DeviceAbstract
+from twister_harness.exceptions import TwisterHarnessException
+from twister_harness.helper import log_command
+from twister_harness.log_files.log_file import DeviceLogFile, HandlerLogFile
+from twister_harness.twister_harness_config import DeviceConfig
 
 logger = logging.getLogger(__name__)
 
@@ -105,7 +105,7 @@ class HardwareAdapter(DeviceAbstract):
         """Return command to flash."""
         west = shutil.which('west')
         if west is None:
-            raise TwisterExtException('west not found')
+            raise TwisterHarnessException('west not found')
 
         command = [
             west,
@@ -148,7 +148,7 @@ class HardwareAdapter(DeviceAbstract):
         if not self.command:
             msg = 'Flash command is empty, please verify if it was generated properly.'
             logger.error(msg)
-            raise TwisterExtException(msg)
+            raise TwisterHarnessException(msg)
         if self.device_config.id:
             logger.info('Flashing device %s', self.device_config.id)
         log_command(logger, 'Flashing command', self.command, level=logging.INFO)
@@ -159,7 +159,7 @@ class HardwareAdapter(DeviceAbstract):
             )
         except subprocess.CalledProcessError:
             logger.error('Error while flashing device')
-            raise TwisterExtException('Could not flash device')
+            raise TwisterHarnessException('Could not flash device')
         else:
             stdout = stderr = None
             try:
@@ -175,7 +175,7 @@ class HardwareAdapter(DeviceAbstract):
             if process.returncode == 0:
                 logger.info('Flashing finished')
             else:
-                raise TwisterExtException(f'Could not flash device {self.device_config.id}')
+                raise TwisterHarnessException(f'Could not flash device {self.device_config.id}')
 
     @property
     def iter_stdout(self) -> Generator[str, None, None]:

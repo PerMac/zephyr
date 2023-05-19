@@ -9,7 +9,7 @@ import os
 import sys
 from pathlib import Path
 
-from twister_ext.helper import normalize_filename
+from twister_harness.helper import normalize_filename
 
 logger = logging.getLogger(__name__)
 

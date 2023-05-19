@@ -6,7 +6,7 @@ import time
 import logging
 import pytest  # noqa # pylint: disable=unused-import
 
-from twister_ext.device.device_abstract import DeviceAbstract
+from twister_harness.device.device_abstract import DeviceAbstract
 
 logger = logging.getLogger(__name__)
 

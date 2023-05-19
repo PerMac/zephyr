@@ -2,5 +2,5 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 
-class TwisterExtException(Exception):
-    """General Twister ext exception."""
+class TwisterHarnessException(Exception):
+    """General Twister harness exception."""

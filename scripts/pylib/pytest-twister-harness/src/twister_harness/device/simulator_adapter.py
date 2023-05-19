@@ -23,12 +23,12 @@ from typing import Generator
 
 import psutil
 
-from twister_ext.constants import END_OF_DATA
-from twister_ext.device.device_abstract import DeviceAbstract
-from twister_ext.exceptions import TwisterExtException
-from twister_ext.helper import log_command
-from twister_ext.log_files.log_file import HandlerLogFile
-from twister_ext.twister_ext_config import DeviceConfig
+from twister_harness.constants import END_OF_DATA
+from twister_harness.device.device_abstract import DeviceAbstract
+from twister_harness.exceptions import TwisterHarnessException
+from twister_harness.helper import log_command
+from twister_harness.log_files.log_file import HandlerLogFile
+from twister_harness.twister_harness_config import DeviceConfig
 
 
 # Workaround for RuntimeError: Event loop is closed
@@ -79,7 +79,7 @@ class SimulatorAdapterBase(DeviceAbstract, abc.ABC):
         if not self.command:
             msg = 'Run simulation command is empty, please verify if it was generated properly.'
             logger.error(msg)
-            raise TwisterExtException(msg)
+            raise TwisterHarnessException(msg)
         self._thread = threading.Thread(target=self._run_simulation, args=(timeout,), daemon=True)
         self._thread.start()
         # Give a time to start subprocess before test is executed
@@ -95,13 +95,13 @@ class SimulatorAdapterBase(DeviceAbstract, abc.ABC):
             return_code: int = asyncio.run(self._run_command(timeout=timeout))
         except subprocess.SubprocessError as e:
             logger.error('Running simulation failed due to subprocess error %s', e)
-            self._exc = TwisterExtException(e.args)
+            self._exc = TwisterHarnessException(e.args)
         except FileNotFoundError as e:
             logger.error(f'Running simulation failed due to file not found: {e.filename}')
-            self._exc = TwisterExtException(f'File not found: {e.filename}')
+            self._exc = TwisterHarnessException(f'File not found: {e.filename}')
         except Exception as e:
             logger.error('Running simulation failed: %s', e)
-            self._exc = TwisterExtException(e.args)
+            self._exc = TwisterHarnessException(e.args)
         else:
             if return_code == 0:
                 logger.info('Running simulation finished with return code %s', return_code)

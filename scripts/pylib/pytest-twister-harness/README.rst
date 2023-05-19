@@ -1,5 +1,5 @@
 ==============
-Twister ext
+Pytest Twister harness
 ==============
 
 Installation
@@ -48,12 +48,12 @@ installed plugin by pip):
 
   # native_posix
   west build -p -b native_posix -- -DCONFIG_NATIVE_UART_0_ON_STDINOUT=y
-  pytest --twister-ext --device-type=native --build-dir=build
+  pytest --twister-harness --device-type=native --build-dir=build
 
   # QEMU
   west build -p -b qemu_x86 -- -DQEMU_PIPE=qemu-fifo
-  pytest --twister-ext --device-type=qemu --build-dir=build
+  pytest --twister-harness --device-type=qemu --build-dir=build
 
   # hardware
   west build -p -b nrf52840dk_nrf52840
-  pytest --twister-ext --device-type=hardware --device-serial=/dev/ttyACM0 --build-dir=build
+  pytest --twister-harness --device-type=hardware --device-serial=/dev/ttyACM0 --build-dir=build

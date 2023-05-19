@@ -10,10 +10,10 @@ from unittest.mock import patch
 
 import pytest
 
-from twister_ext.device.qemu_adapter import QemuAdapter
-from twister_ext.exceptions import TwisterExtException
-from twister_ext.log_files.log_file import HandlerLogFile, NullLogFile
-from twister_ext.twister_ext_config import DeviceConfig
+from twister_harness.device.qemu_adapter import QemuAdapter
+from twister_harness.exceptions import TwisterHarnessException
+from twister_harness.log_files.log_file import HandlerLogFile, NullLogFile
+from twister_harness.twister_harness_config import DeviceConfig
 
 
 @pytest.fixture(name='device')
@@ -23,7 +23,7 @@ def fixture_device_adapter(tmp_path) -> Generator[QemuAdapter, None, None]:
     yield adapter
     try:
         adapter.stop()  # to make sure all running processes are closed
-    except TwisterExtException:
+    except TwisterHarnessException:
         pass
 
 
@@ -44,23 +44,23 @@ def test_if_generate_command_creates_empty_listy_if_west_is_not_installed(patche
 def test_if_qemu_adapter_raises_exception_for_empty_command(device) -> None:
     device.command = []
     exception_msg = 'Run simulation command is empty, please verify if it was generated properly.'
-    with pytest.raises(TwisterExtException, match=exception_msg):
+    with pytest.raises(TwisterHarnessException, match=exception_msg):
         device.flash_and_run(timeout=0.1)
 
 
 def test_if_qemu_adapter_raises_exception_file_not_found(device) -> None:
     device.command = ['dummy']
-    with pytest.raises(TwisterExtException, match='File not found: dummy'):
+    with pytest.raises(TwisterHarnessException, match='File not found: dummy'):
         device.flash_and_run(timeout=0.1)
         device.stop()
     assert device._exc is not None
-    assert isinstance(device._exc, TwisterExtException)
+    assert isinstance(device._exc, TwisterHarnessException)
 
 
 @mock.patch('subprocess.Popen', side_effect=subprocess.SubprocessError(1, 'Exception message'))
 def test_if_qemu_adapter_raises_exception_when_subprocess_raised_an_error(patched_run, device):
     device.command = ['echo', 'TEST']
-    with pytest.raises(TwisterExtException, match='Exception message'):
+    with pytest.raises(TwisterHarnessException, match='Exception message'):
         device.flash_and_run(timeout=0.1)
         device.stop()
 

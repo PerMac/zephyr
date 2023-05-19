@@ -18,13 +18,13 @@ from typing import Generator
 
 import psutil
 
-from twister_ext.constants import QEMU_FIFO_FILE_NAME
-from twister_ext.device.device_abstract import DeviceAbstract
-from twister_ext.device.fifo_handler import FifoHandler
-from twister_ext.exceptions import TwisterExtException
-from twister_ext.helper import log_command
-from twister_ext.log_files.log_file import HandlerLogFile
-from twister_ext.twister_ext_config import DeviceConfig
+from twister_harness.constants import QEMU_FIFO_FILE_NAME
+from twister_harness.device.device_abstract import DeviceAbstract
+from twister_harness.device.fifo_handler import FifoHandler
+from twister_harness.exceptions import TwisterHarnessException
+from twister_harness.helper import log_command
+from twister_harness.log_files.log_file import HandlerLogFile
+from twister_harness.twister_harness_config import DeviceConfig
 
 logger = logging.getLogger(__name__)
 
@@ -61,7 +61,7 @@ class QemuAdapter(DeviceAbstract):
         if not self.command:
             msg = 'Run simulation command is empty, please verify if it was generated properly.'
             logger.error(msg)
-            raise TwisterExtException(msg)
+            raise TwisterHarnessException(msg)
 
         self._thread = threading.Thread(target=self._run_command, args=(self.timeout,), daemon=True)
         self._thread.start()
@@ -90,13 +90,13 @@ class QemuAdapter(DeviceAbstract):
             # and set proper status
         except subprocess.SubprocessError as e:
             logger.error('Running simulation failed due to subprocess error %s', e)
-            self._exc = TwisterExtException(e.args)
+            self._exc = TwisterHarnessException(e.args)
         except FileNotFoundError as e:
             logger.error(f'Running simulation failed due to file not found: {e.filename}')
-            self._exc = TwisterExtException(f'File not found: {e.filename}')
+            self._exc = TwisterHarnessException(f'File not found: {e.filename}')
         except Exception as e:
             logger.error('Running simulation failed: %s', e)
-            self._exc = TwisterExtException(e.args)
+            self._exc = TwisterHarnessException(e.args)
         else:
             if return_code == 0:
                 logger.info('Running simulation finished with return code %s', return_code)
@@ -138,12 +138,12 @@ class QemuAdapter(DeviceAbstract):
             elif self._emulation_was_finished:
                 msg = 'Problem with starting QEMU'
                 logger.error(msg)
-                raise TwisterExtException(msg)
+                raise TwisterHarnessException(msg)
             time.sleep(0.1)
         else:
             msg = 'Problem with starting QEMU - fifo file was not created yet'
             logger.error(msg)
-            raise TwisterExtException(msg)
+            raise TwisterHarnessException(msg)
 
     @property
     def iter_stdout(self) -> Generator[str, None, None]:

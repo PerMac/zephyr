@@ -9,8 +9,8 @@ import logging
 import os
 from typing import Generator
 
-from twister_ext.log_files.log_file import LogFile, NullLogFile
-from twister_ext.twister_ext_config import DeviceConfig
+from twister_harness.log_files.log_file import LogFile, NullLogFile
+from twister_harness.twister_harness_config import DeviceConfig
 
 logger = logging.getLogger(__name__)
 

@@ -7,15 +7,15 @@ from __future__ import annotations
 import logging
 from typing import Type
 
-from twister_ext.device.device_abstract import DeviceAbstract
-from twister_ext.device.hardware_adapter import HardwareAdapter
-from twister_ext.device.qemu_adapter import QemuAdapter
-from twister_ext.device.simulator_adapter import (
+from twister_harness.device.device_abstract import DeviceAbstract
+from twister_harness.device.hardware_adapter import HardwareAdapter
+from twister_harness.device.qemu_adapter import QemuAdapter
+from twister_harness.device.simulator_adapter import (
     CustomSimulatorAdapter,
     NativeSimulatorAdapter,
     UnitSimulatorAdapter,
 )
-from twister_ext.exceptions import TwisterExtException
+from twister_harness.exceptions import TwisterHarnessException
 
 logger = logging.getLogger(__name__)
 
@@ -39,7 +39,7 @@ class DeviceFactory:
             return cls._devices[name]
         except KeyError as e:
             logger.error('There is no device with name "%s"', name)
-            raise TwisterExtException(f'There is no device with name "{name}"') from e
+            raise TwisterHarnessException(f'There is no device with name "{name}"') from e
 
 
 DeviceFactory.register_device_class('custom', CustomSimulatorAdapter)

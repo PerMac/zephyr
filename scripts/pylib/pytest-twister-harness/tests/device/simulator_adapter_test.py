@@ -9,14 +9,14 @@ from unittest import mock
 
 import pytest
 
-from twister_ext.device.simulator_adapter import (
+from twister_harness.device.simulator_adapter import (
     CustomSimulatorAdapter,
     NativeSimulatorAdapter,
     UnitSimulatorAdapter,
 )
-from twister_ext.exceptions import TwisterExtException
-from twister_ext.log_files.log_file import HandlerLogFile, NullLogFile
-from twister_ext.twister_ext_config import DeviceConfig
+from twister_harness.exceptions import TwisterHarnessException
+from twister_harness.log_files.log_file import HandlerLogFile, NullLogFile
+from twister_harness.twister_harness_config import DeviceConfig
 
 
 @pytest.fixture(name='device')
@@ -82,17 +82,17 @@ def test_if_native_simulator_adapter_finishes_after_timeout_while_there_is_no_da
 
 def test_if_native_simulator_adapter_raises_exception_file_not_found(device: NativeSimulatorAdapter) -> None:
     device.command = ['dummy']
-    with pytest.raises(TwisterExtException, match='File not found: dummy'):
+    with pytest.raises(TwisterHarnessException, match='File not found: dummy'):
         device.flash_and_run(timeout=0.1)
         device.stop()
     assert device._exc is not None
-    assert isinstance(device._exc, TwisterExtException)
+    assert isinstance(device._exc, TwisterHarnessException)
 
 
 def test_if_simulator_adapter_raises_exception_empty_command(device: NativeSimulatorAdapter) -> None:
     device.command = []
     exception_msg = 'Run simulation command is empty, please verify if it was generated properly.'
-    with pytest.raises(TwisterExtException, match=exception_msg):
+    with pytest.raises(TwisterHarnessException, match=exception_msg):
         device.flash_and_run(timeout=0.1)
 
 
@@ -108,7 +108,7 @@ def test_if_simulator_adapter_raises_exception_when_subprocess_raised_subprocess
     patched_run, device: NativeSimulatorAdapter
 ):
     device.command = ['echo', 'TEST']
-    with pytest.raises(TwisterExtException, match='Exception message'):
+    with pytest.raises(TwisterHarnessException, match='Exception message'):
         device.flash_and_run(timeout=0.1)
         device.stop()
 
@@ -118,7 +118,7 @@ def test_if_simulator_adapter_raises_exception_when_subprocess_raised_an_error(
     patched_run, device: NativeSimulatorAdapter
 ):
     device.command = ['echo', 'TEST']
-    with pytest.raises(TwisterExtException, match='Raised other exception'):
+    with pytest.raises(TwisterHarnessException, match='Raised other exception'):
         device.flash_and_run(timeout=0.1)
         device.stop()
 
