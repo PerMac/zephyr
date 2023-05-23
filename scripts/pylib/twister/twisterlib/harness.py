@@ -1,6 +1,5 @@
 # SPDX-License-Identifier: Apache-2.0
 from asyncio.log import logger
-import pkg_resources
 import platform
 import re
 import os
@@ -11,15 +10,13 @@ from collections import OrderedDict
 import xml.etree.ElementTree as ET
 import logging
 
-from twisterlib.environment import ZEPHYR_BASE
+from twisterlib.environment import ZEPHYR_BASE, PYTEST_PLUGIN_INSTALLED
 
 
 logger = logging.getLogger('twister')
 logger.setLevel(logging.DEBUG)
 
 _WINDOWS = platform.system() == 'Windows'
-installed_packages = [pkg.project_name for pkg in pkg_resources.working_set]  # pylint: disable=not-an-iterable
-_PYTEST_PLUGIN_INSTALLED = 'pytest-twister-harness' in installed_packages
 
 SUPPORTED_SIMS_IN_PYTEST = ['native', 'qemu']
 
@@ -319,7 +316,7 @@ class Pytest(Harness):
         pytest by update PYTHONPATH and append -p argument to pytest command.
         '''
         env = os.environ.copy()
-        if not _PYTEST_PLUGIN_INSTALLED:
+        if not PYTEST_PLUGIN_INSTALLED:
             cmd.extend(['-p', 'twister_harness.plugin'])
             pytest_plugin_path = os.path.join(ZEPHYR_BASE, 'scripts', 'pylib', 'pytest-twister-harness', 'src')
             env['PYTHONPATH'] = pytest_plugin_path + os.pathsep + env.get('PYTHONPATH', '')
@@ -329,8 +326,6 @@ class Pytest(Harness):
                 cmd_append_python_path = f'export PYTHONPATH={pytest_plugin_path}:${{PYTHONPATH}} && '
         else:
             cmd_append_python_path = ''
-            logger.debug('You work with installed version of pytest-twister-harness '
-                         'plugin - make sure that you work with proper version')
         cmd_to_print = cmd_append_python_path + shlex.join(cmd)
         logger.debug('Running pytest command: %s', cmd_to_print)
 
