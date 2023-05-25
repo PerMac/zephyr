@@ -55,4 +55,6 @@ jobs:
         ZEPHYR_TOOLCHAIN_VARIANT: zephyr
       run: |
         echo "Run twister tests"
-        PYTHONPATH=./scripts/tests pytest ./scripts/tests/twister
+        PYTHONPATH=./scripts/tests \
+        export PYTHONPATH=./scripts/pylib/pytest-twister-harness/src:${PYTHONPATH} \
+        && pytest ./scripts/tests/twister
