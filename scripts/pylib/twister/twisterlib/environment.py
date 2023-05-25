@@ -775,8 +775,8 @@ def parse_arguments(parser, args, options = None):
         options.extra_test_args = options.extra_test_args[1:]
 
     if not options.allow_installed_plugin and PYTEST_PLUGIN_INSTALLED:
-        logger.error("By default Twister should work with uninstalled "
-                     "pytest-twister-harness plugin, so please uninstall it by "
+        logger.error("By default Twister should work without pytest-twister-harness "
+                     "plugin being installed, so please, uninstall it by "
                      "`pip uninstall pytest-twister-harness` and `git clean "
                      "-dxf scripts/pylib/pytest-twister-harness`.")
         sys.exit(1)
