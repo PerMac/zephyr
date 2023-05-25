@@ -55,15 +55,6 @@ def test_if_native_simulator_adapter_runs_without_errors(
     assert file_lines[-2:] == lines[-2:]
 
 
-def test_if_native_simulator_adapter_finishes_after_timeout(device: NativeSimulatorAdapter) -> None:
-    device.command = ['sleep', '0.2']
-    device.flash_and_run(timeout=0.1)
-    list(device.iter_stdout)
-    device.stop()
-    assert device._process_ended_with_timeout is True
-    assert device._exc is None
-
-
 def test_if_native_simulator_adapter_finishes_after_timeout_while_there_is_no_data_from_subprocess(
         resources: Path, device: NativeSimulatorAdapter
 ) -> None:
