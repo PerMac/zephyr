@@ -192,6 +192,7 @@ class Filters:
 
     def find_tests(self):
         tests = set()
+        integration = self.pull_request
         for f in self.modified_files:
             if f.endswith(".rst"):
                 continue
@@ -220,7 +221,7 @@ class Filters:
                     _options.extend(["-p", platform])
             else:
                 _options.append("--all")
-            self.get_plan(_options)
+            self.get_plan(_options, integration)
 
     def find_tags(self):
 
