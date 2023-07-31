@@ -18,10 +18,10 @@ from git import Repo
 if "ZEPHYR_BASE" not in os.environ:
     exit("$ZEPHYR_BASE environment variable undefined.")
 
-repository_path = Path(os.environ['ZEPHYR_BASE'])
+zephyr_base = Path(os.environ['ZEPHYR_BASE'])
 logging.basicConfig(format='%(levelname)s: %(message)s', level=logging.INFO)
 
-sys.path.append(os.path.join(repository_path, 'scripts'))
+sys.path.append(os.path.join(zephyr_base, 'scripts'))
 import list_boards
 
 def _get_match_fn(globs, regexes):
@@ -113,7 +113,7 @@ class Filters:
 
     def get_plan(self, options, integration=False):
         fname = "_test_plan_partial.json"
-        cmd = ["scripts/twister", "-c"] + options + ["--save-tests", fname ]
+        cmd = [f"{zephyr_base}/scripts/twister", "-c"] + options + ["--save-tests", fname ]
         if self.no_path_name:
             cmd += ["--no-path-name"]
         if integration:
@@ -195,7 +195,6 @@ class Filters:
 
     def find_tests(self):
         tests = set()
-        integration = self.pull_request
         for f in self.modified_files:
             if f.endswith(".rst"):
                 continue
@@ -224,11 +223,11 @@ class Filters:
                     _options.extend(["-p", platform])
             else:
                 _options.append("--all")
-            self.get_plan(_options, integration)
+            self.get_plan(_options)
 
     def find_tags(self):
 
-        tag_cfg_file = os.path.join(repository_path, 'scripts', 'ci', 'tags.yaml')
+        tag_cfg_file = os.path.join(zephyr_base, 'scripts', 'ci', 'tags.yaml')
         with open(tag_cfg_file, 'r') as ymlfile:
             tags_config = yaml.safe_load(ymlfile)
 
@@ -316,6 +315,8 @@ def parse_args():
             help="Number of tests per builder")
     parser.add_argument('-n', '--default-matrix', default=10, type=int,
             help="Number of tests per builder")
+    parser.add_argument('-r', '--repo-to-scan', default=None,
+                        help="Repo to scan")
     parser.add_argument('--no-path-name', action="store_true",
             help="Don't put paths into test suites' names ")
     parser.add_argument('--ignore-path', default=None,
@@ -329,9 +330,12 @@ if __name__ == "__main__":
     args = parse_args()
     files = []
     errors = 0
+    repository_path = zephyr_base
+    if args.repo_to_scan:
+        repository_path = Path(args.repo_to_scan)
     if args.commits:
-        repo = Repo(repository_path)
-        commit = repo.git.diff("--name-only", args.commits)
+        repo_to_scan = Repo(repository_path)
+        commit = repo_to_scan.git.diff("--name-only", args.commits)
         files = commit.split("\n")
     elif args.modified_files:
         with open(args.modified_files, "r") as fp:
@@ -342,7 +346,7 @@ if __name__ == "__main__":
         print("\n".join(files))
         print("=========")
 
-    f = Filters(files, args.pull_request, args.platform, args.no_path_name, args.ignore_path)
+    f = Filters(files, args.pull_request, args.platform, args.no_path_name,  args.ignore_path)
     f.process()
 
     # remove dupes and filtered cases
