@@ -85,7 +85,7 @@ class Tag:
         return "<Tag {}>".format(self.name)
 
 class Filters:
-    def __init__(self, modified_files, pull_request=False, platforms=[], no_path_name = False, ignore_path=None):
+    def __init__(self, modified_files, pull_request=False, platforms=[], board_root=None, no_path_name = False, ignore_path=None):
         self.modified_files = modified_files
         self.twister_options = []
         self.full_twister = False
@@ -94,6 +94,7 @@ class Filters:
         self.pull_request = pull_request
         self.platforms = platforms
         self.default_run = False
+        self.board_root = board_root
         self.no_path_name = no_path_name
         self.ignore_path = f"{zephyr_base}/scripts/ci/twister_ignore.txt"
         if ignore_path:
@@ -118,6 +119,8 @@ class Filters:
             cmd += ["--no-path-name"]
         if integration:
             cmd.append("--integration")
+        if self.board_root:
+            cmd += ["--board-root", self.board_root]
 
         logging.info(" ".join(cmd))
         _ = subprocess.call(cmd)
@@ -317,6 +320,8 @@ def parse_args():
             help="Number of tests per builder")
     parser.add_argument('-r', '--repo-to-scan', default=None,
                         help="Repo to scan")
+    parser.add_argument('-A', '--board-root', default=None,
+            help="Additional board roots")
     parser.add_argument('--no-path-name', action="store_true",
             help="Don't put paths into test suites' names ")
     parser.add_argument('--ignore-path', default=None,
@@ -346,7 +351,7 @@ if __name__ == "__main__":
         print("\n".join(files))
         print("=========")
 
-    f = Filters(files, args.pull_request, args.platform, args.no_path_name,  args.ignore_path)
+    f = Filters(files, args.pull_request, args.platform, args.board_root, args.no_path_name,  args.ignore_path)
     f.process()
 
     # remove dupes and filtered cases
