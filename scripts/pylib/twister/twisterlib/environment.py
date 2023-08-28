@@ -437,6 +437,10 @@ structure in the main Zephyr tree: boards/<arch>/<board_name>/""")
         help="Re-use the outdir before building. Will result in "
              "faster compilation since builds will be incremental.")
 
+    parser.add_argument(
+        "--no-path-name", action="store_true",
+        help="Don't put paths into test suites' names ")
+
     # To be removed in favor of --detailed-skipped-report
     parser.add_argument(
         "--no-skipped-report", action="store_true",
@@ -745,7 +749,7 @@ def parse_arguments(parser, args, options = None):
         for fn in options.size:
             sc = SizeCalculator(fn, [])
             sc.size_report()
-        sys.exit(1)
+        sys.exit(0)
 
     if len(options.extra_test_args) > 0:
         # extra_test_args is a list of CLI args that Twister did not recognize
@@ -786,9 +790,9 @@ def parse_arguments(parser, args, options = None):
 class TwisterEnv:
 
     def __init__(self, options=None) -> None:
-        self.version = None
+        self.version = "Unknown"
         self.toolchain = None
-        self.commit_date = None
+        self.commit_date = "Unknown"
         self.run_date = None
         self.options = options
 
@@ -834,20 +838,21 @@ class TwisterEnv:
                 if _version:
                     self.version = _version
                     logger.info(f"Zephyr version: {self.version}")
-                else:
-                    self.version = "Unknown"
-                    logger.error("Could not determine version")
         except OSError:
-            logger.info("Cannot read zephyr version.")
+            logger.exception("Failure while reading Zephyr version.")
 
-        subproc = subprocess.run(["git", "show", "-s", "--format=%cI", "HEAD"],
-                                     stdout=subprocess.PIPE,
-                                     universal_newlines=True,
-                                     cwd=ZEPHYR_BASE)
-        if subproc.returncode == 0:
-            self.commit_date = subproc.stdout.strip()
-        else:
-            self.commit_date = "Unknown"
+        if self.version == "Unknown":
+            logger.warning("Could not determine version")
+
+        try:
+            subproc = subprocess.run(["git", "show", "-s", "--format=%cI", "HEAD"],
+                                        stdout=subprocess.PIPE,
+                                        universal_newlines=True,
+                                        cwd=ZEPHYR_BASE)
+            if subproc.returncode == 0:
+                self.commit_date = subproc.stdout.strip()
+        except OSError:
+            logger.exception("Failure while reading head commit date.")
 
     @staticmethod
     def run_cmake_script(args=[]):

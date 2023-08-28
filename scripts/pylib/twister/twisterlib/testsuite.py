@@ -266,6 +266,8 @@ def scan_testsuite_path(testsuite_path):
 
     src_dir_path = _find_src_dir_path(testsuite_path)
     for filename in glob.glob(os.path.join(src_dir_path, "*.c*")):
+        if os.stat(filename).st_size == 0:
+            continue
         try:
             result: ScanPathResult = scan_file(filename)
             if result.warnings:
@@ -284,7 +286,7 @@ def scan_testsuite_path(testsuite_path):
                 ztest_suite_names += result.ztest_suite_names
 
         except ValueError as e:
-            logger.error("%s: can't find: %s" % (filename, e))
+            logger.error("%s: error parsing source file: %s" % (filename, e))
 
     for filename in glob.glob(os.path.join(testsuite_path, "*.c*")):
         try:
@@ -346,7 +348,7 @@ class TestSuite(DisablePyTestCollectionMixin):
     """Class representing a test application
     """
 
-    def __init__(self, suite_root, suite_path, name, data=None):
+    def __init__(self, suite_root, suite_path, name, data=None, no_path_name=False):
         """TestSuite constructor.
 
         This gets called by TestPlan as it finds and reads test yaml files.
@@ -367,7 +369,9 @@ class TestSuite(DisablePyTestCollectionMixin):
         """
 
         workdir = os.path.relpath(suite_path, suite_root)
-        self.name = self.get_unique(suite_root, workdir, name)
+
+        assert self.check_suite_name(name, suite_root, workdir)
+        self.name = name if no_path_name else self.get_unique(suite_root, workdir, name)
         self.id = name
 
         self.source_dir = suite_path
@@ -423,10 +427,14 @@ class TestSuite(DisablePyTestCollectionMixin):
 
         # workdir can be "."
         unique = os.path.normpath(os.path.join(relative_ts_root, workdir, name))
+        return unique
+
+    @staticmethod
+    def check_suite_name(name, testsuite_root, workdir):
         check = name.split(".")
         if len(check) < 2:
             raise TwisterException(f"""bad test name '{name}' in {testsuite_root}/{workdir}. \
 Tests should reference the category and subsystem with a dot as a separator.
                     """
                     )
-        return unique
+        return True

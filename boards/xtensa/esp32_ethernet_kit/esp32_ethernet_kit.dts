@@ -115,16 +115,17 @@
 	};
 };
 
-&eth {
+&mdio {
+	pinctrl-0 = <&mdio_default>;
+	pinctrl-names = "default";
+
 	phy: phy {
 		compatible = "ethernet-phy";
 		status = "disabled";
 		address = <1>;
-		mdio = <&mdio>;
 	};
 };
 
-&mdio {
-	pinctrl-0 = <&mdio_default>;
-	pinctrl-names = "default";
+&eth {
+	phy-handle = <&phy>;
 };
