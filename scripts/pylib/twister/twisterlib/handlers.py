@@ -218,7 +218,10 @@ class BinaryHandler(Handler):
                     logger.debug("OUTPUT: %s", stripped_line)
                     log_out_fp.write(line_decoded)
                     log_out_fp.flush()
-                    harness.handle(stripped_line)
+                    # A single serial output can have multiple lines and each require verification
+                    lines = stripped_line.splitlines()
+                    for l in lines:
+                        harness.handle(l)
                     if harness.state:
                         if not timeout_extended or harness.capture_coverage:
                             timeout_extended = True
@@ -424,7 +427,10 @@ class DeviceHandler(Handler):
 
                 log_out_fp.write(sl.encode('utf-8'))
                 log_out_fp.flush()
-                harness.handle(sl.rstrip())
+                # A single serial output can have multiple lines and each require verification
+                lines = sl.rstrip().splitlines()
+                for l in lines:
+                    harness.handle(l)
 
             if harness.state:
                 if not harness.capture_coverage:
@@ -903,8 +909,10 @@ class QEMUHandler(Handler):
             log_out_fp.flush()
             line = line.rstrip()
             logger.debug(f"QEMU ({pid}): {line}")
-
-            harness.handle(line)
+            # A single serial output can have multiple lines and each require verification
+            lines = line.splitlines()
+            for l in lines:
+                harness.handle(l)
             if harness.state:
                 # if we have registered a fail make sure the state is not
                 # overridden by a false success message coming from the
@@ -1235,8 +1243,10 @@ class QEMUWinHandler(Handler):
             log_out_fp.flush()
             line = line.rstrip()
             logger.debug(f"QEMU ({self.pid}): {line}")
-
-            harness.handle(line)
+            # A single serial output can have multiple lines and each require verification
+            lines = line.splitlines()
+            for l in lines:
+                harness.handle(l)
             if harness.state:
                 # if we have registered a fail make sure the state is not
                 # overridden by a false success message coming from the
