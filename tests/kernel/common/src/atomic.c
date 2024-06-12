@@ -130,7 +130,7 @@ ZTEST_USER(atomic, test_atomic)
 		     "atomic_ptr_cas");
 	zassert_true((ptr_target == ptr_value), "atomic_ptr_cas");
 
-	/* atomic_add() */
+	/* atomic_add() */ 
 	target = 1;
 	value = 2;
 	zassert_true((atomic_add(&target, value) == 1), "atomic_add");
