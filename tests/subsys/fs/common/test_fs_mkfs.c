@@ -8,7 +8,7 @@
 #include <zephyr/ztest.h>
 #include <zephyr/fs/fs.h>
 
-/* Mount point and paths must be provided by test runner. */
+/* Mount point and paths must be provided by test runner. */ 
 extern struct fs_mount_t *fs_mkfs_mp;
 extern const int fs_mkfs_type;
 extern uintptr_t fs_mkfs_dev_id;
