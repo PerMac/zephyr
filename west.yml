@@ -1,7 +1,7 @@
 # The west manifest file for upstream Zephyr.
 #
 # The per-installation west configuration file, .west/config, sets the
-# path to the project containing this file in the [manifest] section's
+# path to the project  containing this file in the [manifest] section's
 # "path" variable.
 #
 # You are free to create your own manifest files and put them in any
