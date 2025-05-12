@@ -33,6 +33,7 @@ from twisterlib.handlers import (
 from twisterlib.platform import Platform
 from twisterlib.size_calc import SizeCalculator
 from twisterlib.statuses import TwisterStatus
+#from twisterlib.testplan import Filters
 from twisterlib.testsuite import TestCase, TestSuite
 
 logger = logging.getLogger('twister')
@@ -134,6 +135,8 @@ class TestInstance:
     def add_filter(self, reason, filter_type):
         self.filters.append({'type': filter_type, 'reason': reason })
         self.status = TwisterStatus.FILTER
+        if filter_type == "Quarantine filter":
+            self.status = TwisterStatus.QUARANTINE
         self.reason = reason
         self.filter_type = filter_type
 
