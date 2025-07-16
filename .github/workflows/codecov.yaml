@@ -1,7 +1,6 @@
 name: Code Coverage with codecov
 
-on:
-  dispatch
+on: workflow_dispatch
 
 permissions:
   contents: read
