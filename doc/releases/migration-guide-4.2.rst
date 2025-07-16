@@ -23,6 +23,9 @@ the :ref:`release notes<zephyr_4.2>`.
 Build System
 ************
 
+* HWMv1 support has been removed, any out-of-tree boards or SoCs in HWMv1 format must be migrated
+  to :ref:`HWMv2 <hw_model_v2>` to work with Zephyr v4.2 onwards.
+
 Kernel
 ******
 
@@ -559,7 +562,7 @@ Networking
   event types as those are now ``uint64_t`` and the socket option expects a normal 32 bit
   integer value. Because of this, a new ``SO_NET_MGMT_ETHERNET_SET_QAV_PARAM``
   and ``SO_NET_MGMT_ETHERNET_GET_QAV_PARAM`` socket options are created that will replace
-  the previously used ``NET_REQUEST_ETHERNET_GET_QAV_PARAM`` and
+  the previously used ``NET_REQUEST_ETHERNET_SET_QAV_PARAM`` and
   ``NET_REQUEST_ETHERNET_GET_QAV_PARAM`` options.
 
 * The DNS server resolver configuration functions :c:func:`dns_resolve_reconfigure` and
