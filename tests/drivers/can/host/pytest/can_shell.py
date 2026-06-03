@@ -110,8 +110,34 @@ class CanShellBus(BusABC):  # pylint: disable=abstract-method
         if frame_num is None:
             raise CanOperationError('frame not enqueued')
 
-        tx_regex = r'CAN\s+frame\s+#' + frame_num + r'\s+successfully\s+sent'
-        self._dut.readlines_until(regex=tx_regex, timeout=timeout)
+        tx_regex = re.compile(
+            r'CAN\s+frame\s+#'
+            + re.escape(frame_num)
+            + r'\s+successfully\s+sent'
+        )
+        fail_regex = re.compile(
+            r'failed to send CAN frame #'
+            + re.escape(frame_num)
+            + r'\s+\(err\s+(?P<err>-?\d+)\)'
+        )
+
+        for line in self._shell.get_filtered_output(lines):
+            if tx_regex.search(line):
+                return
+            m = fail_regex.search(line)
+            if m:
+                raise CanOperationError(
+                    f'failed to send CAN frame #{frame_num} (err {m.group("err")})'
+                )
+
+        # Fallback for firmware that reports TX completion asynchronously
+        tx_regex_str = tx_regex.pattern
+        try:
+            self._dut.readlines_until(regex=tx_regex_str, timeout=timeout)
+        except Exception as exc:
+            raise CanOperationError(
+                f'TX completion not reported for frame #{frame_num}'
+            ) from exc
 
     def _add_filter(self, can_id: int, can_mask: int, extended: bool) -> None:
         """Add RX filter."""
