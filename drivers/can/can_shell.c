@@ -10,6 +10,7 @@
 
 #include <zephyr/device.h>
 #include <zephyr/drivers/can.h>
+#include <zephyr/kernel.h>
 #include <zephyr/logging/log.h>
 #include <zephyr/shell/shell.h>
 
@@ -53,6 +54,14 @@ static const struct can_shell_mode_mapping can_shell_mode_map[] = {
 K_MSGQ_DEFINE(can_shell_tx_msgq, sizeof(struct can_shell_tx_event),
 	      CONFIG_CAN_SHELL_TX_QUEUE_SIZE, 4);
 const struct shell *can_shell_tx_msgq_sh;
+
+#ifdef CONFIG_CAN_SHELL_SCRIPTING_FRIENDLY
+static K_SEM_DEFINE(can_shell_tx_done_sem, 0, 1);
+static struct {
+	unsigned int frame_no;
+	int error;
+} can_shell_tx_sync;
+#endif /* CONFIG_CAN_SHELL_SCRIPTING_FRIENDLY */
 static struct k_work_poll can_shell_tx_msgq_work;
 static struct k_poll_event can_shell_tx_msgq_events[] = {
 	K_POLL_EVENT_STATIC_INITIALIZER(K_POLL_TYPE_MSGQ_DATA_AVAILABLE,
@@ -184,10 +193,15 @@ static void can_shell_tx_msgq_triggered_work_handler(struct k_work *work)
 
 static void can_shell_tx_callback(const struct device *dev, int error, void *user_data)
 {
+	ARG_UNUSED(dev);
+
+#ifdef CONFIG_CAN_SHELL_SCRIPTING_FRIENDLY
+	can_shell_tx_sync.frame_no = POINTER_TO_UINT(user_data);
+	can_shell_tx_sync.error = error;
+	(void)k_sem_give(&can_shell_tx_done_sem);
+#else
 	struct can_shell_tx_event event;
 	int err;
-
-	ARG_UNUSED(dev);
 
 	event.frame_no = POINTER_TO_UINT(user_data);
 	event.error = error;
@@ -196,6 +210,7 @@ static void can_shell_tx_callback(const struct device *dev, int error, void *use
 	if (err != 0) {
 		LOG_ERR("CAN shell tx event queue full");
 	}
+#endif /* CONFIG_CAN_SHELL_SCRIPTING_FRIENDLY */
 }
 
 static void can_shell_rx_callback(const struct device *dev, struct can_frame *frame,
@@ -911,10 +926,12 @@ static int cmd_can_send(const struct shell *sh, size_t argc, char **argv)
 		frame.data[i] = val;
 	}
 
+#ifndef CONFIG_CAN_SHELL_SCRIPTING_FRIENDLY
 	err = can_shell_tx_msgq_poll_submit(sh);
 	if (err != 0) {
 		return err;
 	}
+#endif /* CONFIG_CAN_SHELL_SCRIPTING_FRIENDLY */
 
 	frame_no = frame_counter++;
 
@@ -928,11 +945,31 @@ static int cmd_can_send(const struct shell *sh, size_t argc, char **argv)
 		    (frame.flags & CAN_FRAME_BRS) != 0 ? 1 : 0,
 		    frame.dlc);
 
+#ifdef CONFIG_CAN_SHELL_SCRIPTING_FRIENDLY
+	k_sem_reset(&can_shell_tx_done_sem);
+#endif /* CONFIG_CAN_SHELL_SCRIPTING_FRIENDLY */
+
 	err = can_send(dev, &frame, K_NO_WAIT, can_shell_tx_callback, UINT_TO_POINTER(frame_no));
 	if (err != 0) {
 		shell_error(sh, "failed to enqueue CAN frame #%u (err %d)", frame_no, err);
 		return err;
 	}
+
+#ifdef CONFIG_CAN_SHELL_SCRIPTING_FRIENDLY
+	if (k_sem_take(&can_shell_tx_done_sem, K_SECONDS(1)) != 0) {
+		shell_error(sh, "timeout waiting for CAN frame #%u TX completion", frame_no);
+		k_sem_reset(&can_shell_tx_done_sem);
+		return -ETIMEDOUT;
+	}
+
+	if (can_shell_tx_sync.error == 0) {
+		shell_print(sh, "CAN frame #%u successfully sent", frame_no);
+	} else {
+		shell_error(sh, "failed to send CAN frame #%u (err %d)", frame_no,
+			    can_shell_tx_sync.error);
+		return can_shell_tx_sync.error;
+	}
+#endif /* CONFIG_CAN_SHELL_SCRIPTING_FRIENDLY */
 
 	return 0;
 }
